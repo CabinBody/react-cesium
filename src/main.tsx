@@ -1,14 +1,15 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import CesiumMap from './CesiumMap.tsx'
+import { RouterProvider } from "react-router-dom";
 import { Provider } from "react-redux";
-import AllStore from './store/index.ts';
+import Store from './store/index.ts';
+import Router from './router/index.tsx';
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Provider store={AllStore}>
-    <CesiumMap />
+    <Provider store={Store}>
+    <RouterProvider router={Router}></RouterProvider>
     </Provider>
     
   </React.StrictMode>,

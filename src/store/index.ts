@@ -1,13 +1,15 @@
 import { configureStore } from "@reduxjs/toolkit";
 import CesiumMapReducer from "./modules/CesiumMapReducer";
+import userReducer from "./modules/userReducer";
 
-const AllStore = configureStore({
-    reducer:{
-        cesiumMap : CesiumMapReducer
+const Store = configureStore({
+    reducer: {
+        cesiumMap: CesiumMapReducer,
+        token: userReducer
     }
 })
 
-export type RootState = ReturnType<(typeof AllStore.getState)>
-export type RootDispatch = typeof AllStore.dispatch
+export type RootState = ReturnType<(typeof Store.getState)>
+export type RootDispatch = typeof Store.dispatch
 
-export default AllStore
+export default Store

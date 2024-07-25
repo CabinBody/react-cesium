@@ -15,7 +15,7 @@ export function getDataPrimitive() {
         hprList:[],
     }
 
-    const cartesianPointList = pointList.map((point) => Cesium.Cartesian3.fromDegrees(point.longitude, point.latitude, point.height))
+    const cartesianPointList = pointList.map((point) => Cesium.Cartesian3.fromDegrees(point.longitude, point.latitude, 500))
 
     const hprList = [] as any[]
     pointList.map((item) => {
