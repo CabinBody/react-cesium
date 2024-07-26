@@ -1,30 +1,30 @@
-import {Cartographic,Math} from 'cesium'
+import {Cartographic,Math,Viewer} from 'cesium'
 
-function getCameraParameters(viewer:any) {
+function getCameraParameters(viewer:Viewer) {
 
-    var camera = viewer.camera;
+    let camera = viewer.camera;
 
     // 相机位置（Cartesian3 坐标）
-    var position = camera.position;
+    let position = camera.position;
 
     // 相机方向（Cartesian3 坐标）
-    // var direction = camera.direction;
+    // let direction = camera.direction;
 
     // 相机向上方向（Cartesian3 坐标）
-    // var up = camera.up;
+    // let up = camera.up;
 
     // 相机右方向（Cartesian3 坐标）
-    // var right = camera.right;
+    // let right = camera.right;
 
     // 相机视场角
-    // var frustum = camera.frustum;
-    // var fov = Math.toDegrees(frustum.fovy); // 垂直视场角（以度为单位）
+    // let frustum = camera.frustum;
+    // let fov = Math.toDegrees(frustum.fovy); // 垂直视场角（以度为单位）
 
     // 将 Cartesian3 坐标转换为经纬度
-    var cartographic = Cartographic.fromCartesian(position);
-    var longitude = Math.toDegrees(cartographic.longitude);
-    var latitude = Math.toDegrees(cartographic.latitude);
-    var height = cartographic.height;
+    let cartographic = Cartographic.fromCartesian(position);
+    let longitude = Math.toDegrees(cartographic.longitude);
+    let latitude = Math.toDegrees(cartographic.latitude);
+    let height = cartographic.height;
 
     // 打印相机参数
     // console.log('相机位置（Cartesian3 坐标）:', position);

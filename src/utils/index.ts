@@ -1,6 +1,5 @@
 import { request } from "./request";
 import { setToken,getToken,removeToken } from "./token";
-import {getProvinceList} from './GetProvince'
 import getCameraParameters from './GetCameraParam'
 
 
@@ -9,6 +8,5 @@ export {
     setToken,
     getToken,
     removeToken,
-    getProvinceList,
     getCameraParameters
 }

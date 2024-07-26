@@ -121,10 +121,10 @@
 //     //添加默认的无人机实体
 //     if (dataPrimitive.cartesianPointList) {
 //       for (let index = 0; index < dataPrimitive.cartesianPointList.length; index++) {
-//         var position = dataPrimitive.cartesianPointList[index]
+//         let position = dataPrimitive.cartesianPointList[index]
 //         if (dataPrimitive.hprList) {
 //           // console.log(dataPrimitive.hprList)
-//           var hpr = dataPrimitive.hprList[index]
+//           let hpr = dataPrimitive.hprList[index]
 //           viewer.entities.add({
 //             id: dataPrimitive.origin[index].id,
 //             name: `UAV ${index + 1}`,
@@ -140,9 +140,9 @@
 //     }
 
 //     //在无人周围生成场
-//     var UAVRadius = 100000
+//     let UAVRadius = 100000
 //     // console.log(viewer.entities)
-//     var entities = viewer.entities.values
+//     let entities = viewer.entities.values
 //     entities.forEach((entity) => {
 //       viewer.entities.add({
 //         position: entity.position,
@@ -182,10 +182,10 @@
 
 
 //     // 添加点击事件
-//     var handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
+//     let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
 
 //     handler.setInputAction(function onLeftClick(event: any) {
-//       var pickObject = viewer.scene.pick(event.position)
+//       let pickObject = viewer.scene.pick(event.position)
 
 //       if (Cesium.defined(pickObject)) {
 //         console.log('点击了对象:', pickObject.id);
@@ -199,15 +199,15 @@
 
 //     // 添加鼠标移动控制镜头移动
 //     handler.setInputAction(function (movement: any) {
-//       var cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
-//       var percise = 0
+//       let cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+//       let percise = 0
 
-//       var currentLogi = DEFAULTCAMERALONGITUDE
-//       var currentAlti = DEFAULTCAMERAALTITUDE
+//       let currentLogi = DEFAULTCAMERALONGITUDE
+//       let currentAlti = DEFAULTCAMERAALTITUDE
 //       if (cartesian) {
-//         var cartographic = Cesium.Cartographic.fromCartesian(cartesian)
-//         var longitude = Cesium.Math.toDegrees(cartographic.longitude)
-//         var latitude = Cesium.Math.toDegrees(cartographic.latitude)
+//         let cartographic = Cesium.Cartographic.fromCartesian(cartesian)
+//         let longitude = Cesium.Math.toDegrees(cartographic.longitude)
+//         let latitude = Cesium.Math.toDegrees(cartographic.latitude)
 //         // 相机和鼠标一起动
 //         setLongitude(longitude)
 //         setAltitude(latitude)
