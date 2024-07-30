@@ -1,6 +1,5 @@
 import { request } from "./request";
 import { setToken,getToken,removeToken } from "./token";
-import getCameraParameters from './GetCameraParam'
 
 
 export {
@@ -8,5 +7,4 @@ export {
     setToken,
     getToken,
     removeToken,
-    getCameraParameters
 }

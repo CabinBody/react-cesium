@@ -1,10 +1,10 @@
 import { LabelCollection, Viewer, Cartesian3, Color, LabelStyle, NearFarScalar, VerticalOrigin } from "cesium";
 
 
-const addProvince = (viewer: Viewer, province: any[]) => {
+const addProvince = async (viewer: Viewer, province: any[]) => {
     const labels = new LabelCollection();
     viewer.scene.primitives.add(labels);
-    province.forEach(item => {
+    await province.forEach(item => {
         if (item.properties.centroid) {
             labels.add({
                 position: Cartesian3.fromDegrees(item.properties.centroid[0], item.properties.centroid[1]), 

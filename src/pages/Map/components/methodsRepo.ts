@@ -1,6 +1,8 @@
 import { Point,DataFrame } from "../../../global-env";
 import * as Cesium from "cesium";
 import random_points from '../../../../public/random_points.json'
+import provinceList from '../../../../public/tst.json'
+import uavCountList from '../../../../public/province_counts.json'
 
 
 
@@ -58,7 +60,7 @@ function getDataPrimitive() {
 
 
 // 获取中国各省的坐标数据
-import provinceList from '../../../../public/tst.json'
+
 
 function getProvinceList() {
 
@@ -67,11 +69,18 @@ function getProvinceList() {
     return pointList
 }
 
+function getUavCountList(){
+    const uavCount = uavCountList
+
+    return uavCount
+}
+
 
 export {
     findItemById,
     addWorldTerrainAsync,
     addOsmBuildingsAsync,
     getDataPrimitive,
-    getProvinceList
+    getProvinceList,
+    getUavCountList
 }

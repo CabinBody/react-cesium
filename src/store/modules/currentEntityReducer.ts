@@ -5,7 +5,7 @@ const initialState :EntityData = {
 }
 
 const currentEntityReducer = createSlice({
-    name:'user',
+    name:'entity',
     initialState,
     reducers:{
         getEntityData(state,action){

@@ -6,6 +6,7 @@ import {CESIUMTOKEN,DEFAULTCAMERALONGITUDE,DEFAULTCAMERALATITUDE,DEFAULTCAMERAHE
 const viewerInitial = (cesiumContainerRef: any) => {
     // 初始化Cesium Viewer
     const viewer = new Cesium.Viewer(cesiumContainerRef.current, {
+        
         terrain: Cesium.Terrain.fromWorldTerrain(),
         // 禁用infoBox
         infoBox: false,
@@ -18,7 +19,7 @@ const viewerInitial = (cesiumContainerRef: any) => {
         animation: false,
         timeline: false,
         vrButton: false,
-        requestRenderMode: true,
+
     });
     // 初始化token
     Cesium.Ion.defaultAccessToken = CESIUMTOKEN
@@ -39,12 +40,12 @@ const viewerInitial = (cesiumContainerRef: any) => {
     addOsmBuildingsAsync(viewer)
 
     // 添加第三方图层
-    viewer.dataSources.add(Cesium.GeoJsonDataSource.load("../public/tst.json", {
+    viewer.dataSources.add(Cesium.GeoJsonDataSource.load("../../../../tst.json", {
         fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.3),
         stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
         strokeWidth: 2,
-        
     }))
+
 
     // 取消默认的点击事件和控制视角
     viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
@@ -62,7 +63,7 @@ const viewerInitial = (cesiumContainerRef: any) => {
     // 设置地球是否显示
     viewer.scene.globe.show = false
     viewer.scene.skyAtmosphere.show = false
-    viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#2F4F4F').withAlpha(0.5)
+    viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a1f44').withAlpha(0.5)
     viewer.scene.skyBox.show = false
     viewer.scene.moon.show = false
 

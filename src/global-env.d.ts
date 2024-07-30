@@ -4,13 +4,15 @@ import ''
 
 // 每个数据点的坐标
 export type Point = {
-    id: number;
-    longitude: number;
-    latitude: number;
-    height: number;
-    degree: number;
-    pitch: number;
-    roll: number;
+    province?:string
+    id: number
+    longitude?: number
+    latitude?: number
+    height?: number
+    degree?: number
+    pitch?: number
+    roll?: number
+    uavCount?:number
 }
 // 浮窗的屏幕坐标
 export interface PopXY {

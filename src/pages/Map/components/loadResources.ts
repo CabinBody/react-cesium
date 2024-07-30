@@ -1,14 +1,15 @@
-import { getDataPrimitive,getProvinceList } from "./methodsRepo"
+import { getDataPrimitive,getProvinceList,getUavCountList } from "./methodsRepo"
 
-const loadResources = async () => {
+
+const loadResources = () => {
     // 处理键盘按下事件
     const dataPrimitive = getDataPrimitive()
     // console.log(dataPrimitive.origin)
     const province = getProvinceList()
 
-    await setTimeout(() => { }, 2000)
+    const uavCountList = getUavCountList()
 
-    return { dataPrimitive: dataPrimitive, province: province }
+    return { dataPrimitive: dataPrimitive, province: province,uavCountList:uavCountList}
   }
 
   export default loadResources

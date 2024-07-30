@@ -12,11 +12,13 @@ export interface Point {
 export interface InitialState {
     coordinate: Point[]
     province:any
+    uavCount:any
 }
 
 const initialState: InitialState = {
     coordinate: [],
-    province:{}
+    province:{},
+    uavCount:{}
 }
 
 
@@ -29,11 +31,14 @@ const CesiumeMapReducer = createSlice({
         },
         getProvince(state,action){
             state.province = action.payload
+        },
+        getUavCount(state,action){
+            state.uavCount = action.payload
         }
     }
 })
 
-const { getPointList,getProvince } = CesiumeMapReducer.actions
+const { getPointList,getProvince,getUavCount } = CesiumeMapReducer.actions
 
 
 const fetchPointList = (url: string) => {
@@ -50,8 +55,15 @@ const fetchProvince = () => {
     }
 }
 
+const fetchUavCount = () => {
+    return async (dispatch: ReturnType<UseDispatch>) => {
+        const res = await axios.get('../../../public/province_counts.json')
+        dispatch(getUavCount(res.data))
+    }
+}
 
 
-export { fetchPointList ,fetchProvince}
+
+export { fetchPointList ,fetchProvince,fetchUavCount}
 
 export default CesiumeMapReducer.reducer
