@@ -98,7 +98,7 @@ const BarChart = () => {
         ]
     };
 
-    return <ReactECharts option={option} style={{ height: '600px', width: '100%' }} />
+    return <ReactECharts option={option} style={{ height: '800px', width: '100%' }} />
 };
 
 export default BarChart;

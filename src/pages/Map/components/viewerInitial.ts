@@ -41,7 +41,7 @@ const viewerInitial = (viewer:Cesium.Viewer) => {
     viewer.scene.screenSpaceCameraController.maximumZoomDistance = 6791711.819523133;//相机高度的最大值
     viewer.scene.screenSpaceCameraController.minimumZoomDistance = 900000;//相机的高度的最小值  
     viewer.scene.screenSpaceCameraController.enableRotate = false; // 禁用旋转
-    // viewer.scene.screenSpaceCameraController.enableZoom = false; // 禁用缩放
+    viewer.scene.screenSpaceCameraController.enableZoom = false; // 禁用缩放
     viewer.scene.screenSpaceCameraController.enableLook = false; // 禁用视角调整
     viewer.scene.screenSpaceCameraController.enableTilt = false; // 禁用倾斜
     viewer.scene.screenSpaceCameraController.enableTranslate = false; // 禁用平移

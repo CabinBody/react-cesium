@@ -95,7 +95,6 @@ const CesiumMap: React.FC = () => {
           <img className='bupt_logo' src={logo} alt="" />
           <div className="sidebar" style={{ height: '100px' }}>
             <div className="sidebar-content">
-            <button onClick={() => {setTest(!test)}}></button>
               选取省份：{target?.province ? target.province : ''}
               {target.province && <button className='clearButton' onClick={() => { setTarget(item => ({ ...item, province: '' })) }}>
                 <img src="../../asset/close.png" alt="" />
@@ -129,7 +128,7 @@ const CesiumMap: React.FC = () => {
                   </Col>
                 </Row>
               </ConfigProvider>
-              <div className='barChart'>
+              <div className='barChart' style={{ marginTop:'100px' }}>
                 <BarChart></BarChart>
               </div>
             </div>}
