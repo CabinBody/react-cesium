@@ -1,11 +1,28 @@
 import ReactECharts from 'echarts-for-react';
-import provinceList from '../../../../public/province_counts.json'
+import virtualData from '../../../../public/virtual_UAV_DataPoint.json'
 
-const province = Object.entries(provinceList).sort((b, a) => b[1] - a[1])
+type ChartPoint = {
+    name:string
+    value:number
+}
+
+
+const findByProvince = (data: any, value: string, key: string): any | undefined => {
+    return data.find((item: any) => item[key] == value)
+}
+const setData: any = virtualData
+
+const chartData: ChartPoint[] = Object.entries(setData).map((target: any) => ({
+    name: target[1].province,
+    value: target[1].province_count
+}));
+// console.log(chartData)
+
+chartData.sort((b, a) => b.value - a.value)
 // console.log(province)
 
-const ydata =  province.map(item=>item[0])
-const xdata = province.map(item=>item[1])
+const ydata:string[] = chartData.map((item: any) => item.name)
+const xdata:number[]= chartData.map((item: any) => item.value)
 
 
 

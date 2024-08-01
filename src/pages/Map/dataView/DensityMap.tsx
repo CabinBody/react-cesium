@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import * as echarts from 'echarts/core';
 import {
     TitleComponent,
@@ -9,7 +9,7 @@ import {
 } from 'echarts/components';
 import { MapChart } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
-import cityCount from '../../../../public/province_city_counts.json'
+import virtualData from '../../../../public/virtual_UAV_DataPoint.json'
 
 echarts.use([
     TitleComponent,
@@ -24,29 +24,34 @@ echarts.use([
 const DensityMap = (props: { province: string }) => {
 
     const chartRef = useRef(null);
-    const [state,setState] = useState('')
-    // console.log(state)
+
+    const findByProvince = (data: any, value: string, key: string): any | undefined => {
+        return data.find((item:any) => item[key] == value)
+    }
 
     useEffect(() => {
-        setState(props.province)
-        const ROOT_PATH = '/public/Province/';
-        const chartDom = document.getElementById('main');
+        // if (chartRef) {
+        //     console.log(chartRef)
+        // }
+        const ROOT_PATH = '/Province/';
+        const chartDom = document.getElementById('DensityMap');
         const myChart = echarts.init(chartDom);
-        const data: any = cityCount
-        const mapData = Object.entries(data[props.province].cities).map(([key, value]) => ({
-            name: key,
-            value: value
-        }));
-        // console.log(mapData)
-
-
-        myChart.showLoading();
-
+        const data: any = virtualData
+        let mapData: any
+        if (findByProvince(data,props.province,'province')) {
+            mapData = Object.entries(findByProvince(data,props.province,'province').city).map((target:any) => ({
+                name: target[1].city_name,
+                value: target[1].city_count
+            }));
+            console.log()
+        }
+        else mapData = []
+        // myChart.showLoading();
         fetch(ROOT_PATH + `${props.province}.json`)
             .then((response) => response.json())
             .then((geoJson) => {
-                myChart.hideLoading();
-                echarts.registerMap('HK', geoJson);
+                // myChart.hideLoading();
+                echarts.registerMap(props.province, geoJson);
 
                 const option = {
                     title: {
@@ -54,25 +59,32 @@ const DensityMap = (props: { province: string }) => {
                     },
                     tooltip: {
                         trigger: 'item',
-                        formatter: '{b}<br/>{c} (p / km2)'
+                        formatter: (params: any) => {
+                            return params.name + '<br/>' + (params.value ? params.value : 0) + '架'
+                        }
                     },
                     visualMap: {
+                        textStyle: {
+                            color: '#B8F8F1'
+                        },
+                        left: 'right',
                         min: 0,
-                        max: 100,
-                        text: ['High', 'Low'],
+                        max: 200,
+                        text: ['600', '0'],
                         realtime: false,
-                        calculable: false,
+                        calculable: true,
 
                         inRange: {
                             color: ['#B8F8F1', '#073E59']
                         },
-                        show: false
+                        show: "ture",
+                        position: 'right'
                     },
                     series: [
                         {
                             name: props.province,
                             type: 'map',
-                            map: 'HK',
+                            map: props.province,
                             label: {
                                 show: false
                             },
@@ -89,9 +101,9 @@ const DensityMap = (props: { province: string }) => {
             }
         };
 
-    }, [state]);
+    }, [props.province]);
 
-    return <div id="main" ref={chartRef} style={{ width: '600px', height: '600px' }} />;
+    return <div id="DensityMap" ref={chartRef} style={{ width: '600px', height: '600px' }} />;
 };
 
 export default DensityMap;

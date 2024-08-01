@@ -49,8 +49,8 @@ const viewerInitial = (cesiumContainerRef: any) => {
 
     // 取消默认的点击事件和控制视角
     viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
-    viewer.scene.screenSpaceCameraController.maximumZoomDistance = 6791711.819523133;
-    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 900000;//相机的高度的最小值  //相机高度的最大值
+    viewer.scene.screenSpaceCameraController.maximumZoomDistance = 6791711.819523133;//相机高度的最大值
+    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 900000;//相机的高度的最小值  
     viewer.scene.screenSpaceCameraController.enableRotate = false; // 禁用旋转
     // viewer.scene.screenSpaceCameraController.enableZoom = false; // 禁用缩放
     viewer.scene.screenSpaceCameraController.enableLook = false; // 禁用视角调整
