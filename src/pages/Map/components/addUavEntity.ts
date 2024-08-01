@@ -23,7 +23,7 @@ const addUavEntity = (viewer: Viewer, dataPrimitive: any,) => {
         }
     }
     //在无人周围生成场 半径100000
-    let UAVRadius = 100000
+    let UAVRadius = 100
     // console.log(viewer.entities)
     let entities = viewer.entities.values
     entities.forEach((entity) => {

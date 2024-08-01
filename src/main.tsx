@@ -9,8 +9,7 @@ import Router from './router/index.tsx';
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Provider store={Store}>
-    <RouterProvider router={Router}></RouterProvider>
+      <RouterProvider router={Router}></RouterProvider>
     </Provider>
-    
   </React.StrictMode>,
 )

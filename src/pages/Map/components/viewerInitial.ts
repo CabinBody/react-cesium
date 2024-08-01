@@ -1,29 +1,13 @@
 import * as Cesium from "cesium";
 import { addWorldTerrainAsync, addOsmBuildingsAsync } from "./methodsRepo";
 import {CESIUMTOKEN,DEFAULTCAMERALONGITUDE,DEFAULTCAMERALATITUDE,DEFAULTCAMERAHEIGHT} from './Setting'
+import loadResources from "./loadResources";
+import addProvince from "./addProvince";
 
 
-const viewerInitial = (cesiumContainerRef: any) => {
-    // 初始化Cesium Viewer
-    const viewer = new Cesium.Viewer(cesiumContainerRef.current, {
-        
-        terrain: Cesium.Terrain.fromWorldTerrain(),
-        // 禁用infoBox
-        infoBox: false,
-        geocoder: false,
-        homeButton: false,
-        sceneModePicker: false,
-        baseLayerPicker: false,
-        fullscreenButton: false,
-        navigationHelpButton: false,
-        animation: false,
-        timeline: false,
-        vrButton: false,
+const viewerInitial = (viewer:Cesium.Viewer) => {
 
-    });
-    // 初始化token
     Cesium.Ion.defaultAccessToken = CESIUMTOKEN
-
     // 设置相机参数
     viewer.camera.setView({
         destination: Cesium.Cartesian3.fromDegrees(DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT),
@@ -40,11 +24,16 @@ const viewerInitial = (cesiumContainerRef: any) => {
     addOsmBuildingsAsync(viewer)
 
     // 添加第三方图层
-    viewer.dataSources.add(Cesium.GeoJsonDataSource.load("../../../../tst.json", {
+    viewer.dataSources.add(Cesium.GeoJsonDataSource.load("../../../../public/china.json", {
         fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.3),
         stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
         strokeWidth: 2,
     }))
+    // viewer.dataSources.add(Cesium.GeoJsonDataSource.load("../../../../public/Province/西藏自治区.json", {
+    //     fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.3),
+    //     stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
+    //     strokeWidth: 2,
+    // }))
 
 
     // 取消默认的点击事件和控制视角
@@ -66,6 +55,14 @@ const viewerInitial = (cesiumContainerRef: any) => {
     viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a1f44').withAlpha(0.5)
     viewer.scene.skyBox.show = false
     viewer.scene.moon.show = false
+
+    const data = loadResources()
+
+    // 中国省区市的坐标数据
+    const province = data.province
+
+    addProvince(viewer, province)
+    
 
     return viewer
 }

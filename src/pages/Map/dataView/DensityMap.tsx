@@ -43,7 +43,6 @@ const DensityMap = (props: { province: string }) => {
                 name: target[1].city_name,
                 value: target[1].city_count
             }));
-            console.log()
         }
         else mapData = []
         // myChart.showLoading();

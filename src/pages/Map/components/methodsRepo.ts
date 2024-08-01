@@ -1,8 +1,7 @@
-import { Point,DataFrame } from "../../../global-env";
+import { Point, DataFrame } from "../../../global-env";
 import * as Cesium from "cesium";
-import random_points from '../../../../public/random_points.json'
-import provinceList from '../../../../public/tst.json'
-import uavCountList from '../../../../public/province_counts.json'
+import random_points from '../../../../public/virtual_UAV_DataPoint.json'
+import provinceList from '../../../../public/china.json'
 
 
 
@@ -34,23 +33,28 @@ const addOsmBuildingsAsync = async (viewer: Cesium.Viewer) => {
 };
 
 // 获取无人机飞行的笛卡尔坐标和hpr数据
-function getDataPrimitive() {
-    const pointList = random_points
+function getDataPrimitive(province: string, city: string) {
+    const data: any = random_points
+
+    let targetP: any = data.find((item: any) => item.province == province)
+
+    const pointList: any[] = targetP.find((item: any) => item.city_name == city).data_point
+
     const dataPrimitive: DataFrame = {
-        origin : pointList,
-        hprList:[],
+        origin: pointList,
+        hprList: [],
     }
 
     const cartesianPointList = pointList.map((point) => Cesium.Cartesian3.fromDegrees(point.longitude, point.latitude, 500))
 
     const hprList = [] as any[]
     pointList.map((item) => {
-        const hpr = new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(item.degree),0,0)
+        const hpr = new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(item.degree), 0, 0)
         // console.log(hpr)
         hprList.push(hpr)
-     })
+    })
     // let hpr = new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(60),0,0)
-    
+
     dataPrimitive.hprList = hprList
     // console.log(dataPrimitive.origin)
     dataPrimitive.cartesianPointList = cartesianPointList
@@ -69,9 +73,17 @@ function getProvinceList() {
     return pointList
 }
 
-function getUavCountList(){
-    const uavCount = uavCountList
+function getUavCountList() {
+    const data: any = random_points
 
+    let uavCount: any
+    if (data) {
+        uavCount = Object.entries(data).map((target: any) => ({
+            name: target[1].province,
+            value: target[1].province_count
+        }));
+    }
+    else uavCount = []
     return uavCount
 }
 

@@ -1,15 +1,12 @@
 import ReactECharts from 'echarts-for-react';
 import virtualData from '../../../../public/virtual_UAV_DataPoint.json'
 
+
 type ChartPoint = {
     name:string
     value:number
 }
 
-
-const findByProvince = (data: any, value: string, key: string): any | undefined => {
-    return data.find((item: any) => item[key] == value)
-}
 const setData: any = virtualData
 
 const chartData: ChartPoint[] = Object.entries(setData).map((target: any) => ({

@@ -1,10 +1,10 @@
 import './index.less'
 import React, { useEffect, useRef, useState } from "react";
 import './index.less'
-import { Point, PopXY } from '../../global-env';
+import * as Cesium from 'cesium'
+import { DataPoint, Point, PopXY } from '../../global-env';
 import viewerInitial from './components/viewerInitial';
 import loadResources from './components/loadResources';
-import addProvince from './components/addProvince';
 import addMouseActions from './components/addMouseActions';
 import logo from '../../asset/buptLogo.png'
 import { Col, Row, Statistic, ConfigProvider, Empty } from 'antd';
@@ -14,13 +14,17 @@ import DensityMap from './dataView/DensityMap';
 
 
 
-const CesiumMap: React.FC = () => {
 
+const CesiumMap: React.FC = () => {
+  // const dispatch: RootDispatch = useDispatch()
+  const [test,setTest] = useState(true)
+  const [height_ALL, setheight] = useState(0)
   const [longitude_ALL, setLongitude] = useState(0)
   const [latitude_ALL, setLatitude] = useState(0)
   const [pickUavId, setPickUavId] = useState('')
   const [target, setTarget] = useState<Point>({
     province: '北京市',
+    city:'',
     id: 0,
     longitude: 0,
     latitude: 0,
@@ -30,7 +34,7 @@ const CesiumMap: React.FC = () => {
     roll: 0,
     uavCount: 0
   })
-  const cesiumContainerRef = useRef<HTMLDivElement>(null)
+  const cesiumContainerRef = useRef<HTMLDivElement|any>(null)
   const [popup, setPopup] = useState<PopXY | null>(null);
 
   //点击生成信息框
@@ -42,33 +46,46 @@ const CesiumMap: React.FC = () => {
     // 加载数据
     const data = loadResources()
 
-    console.log('模型加载完毕~~~')
-    // 无人机原始数据
-    const dataPrimitive = data.dataPrimitive
-    // 中国省区市的坐标数据
-    const province = data.province
     // 初始化cesium地图组件
-    const uavCountList: any = data.uavCountList
+    const uavCountList: DataPoint[] = data.uavCountList
 
-    const viewer = viewerInitial(cesiumContainerRef)
+   
+    // 初始化Cesium Viewer
+    const viewer = new Cesium.Viewer(cesiumContainerRef.current, {
+        
+        // terrain: Cesium.Terrain.fromWorldTerrain(),
+        // 禁用infoBox
+        infoBox: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        baseLayerPicker: false,
+        fullscreenButton: false,
+        navigationHelpButton: false,
+        animation: false,
+        timeline: false,
+        vrButton: false,
+
+    });
 
 
+    viewerInitial(viewer)
 
-    // 添加无人机到地图上
-    // addUavEntity(viewer, dataPrimitive)
-
-    // 添加各省的名称
-    addProvince(viewer, province)
+    const dataPrimitive = [] as any[]
 
     // 添加点击事件
 
-    addMouseActions({viewer,setLongitude,setLatitude,setPickUavId,setTarget,dataPrimitive,uavCountList})
+    addMouseActions({
+      viewer,setLongitude, setLatitude,
+      setPickUavId, setTarget, setheight, dataPrimitive,
+      uavCountList,
+    })
 
     return () => {
-      viewer.destroy()
+      // viewer.destroy()
       setPickUavId('')
     }
-  }, [])
+  }, [test])
 
 
   return (
@@ -78,6 +95,7 @@ const CesiumMap: React.FC = () => {
           <img className='bupt_logo' src={logo} alt="" />
           <div className="sidebar" style={{ height: '100px' }}>
             <div className="sidebar-content">
+            <button onClick={() => {setTest(!test)}}></button>
               选取省份：{target?.province ? target.province : ''}
               {target.province && <button className='clearButton' onClick={() => { setTarget(item => ({ ...item, province: '' })) }}>
                 <img src="../../asset/close.png" alt="" />
@@ -87,6 +105,7 @@ const CesiumMap: React.FC = () => {
           <div className="sidebar">
             {!target.province && <Empty description=' '></Empty>}
             {target.province && <div className="sidebar-content" style={{ color: 'white' }}>
+              
               <ConfigProvider
                 theme={{
                   token: {
@@ -97,16 +116,16 @@ const CesiumMap: React.FC = () => {
               >
                 <Row gutter={1} >
                   <Col span={12} >
-                    <Statistic title='无人机总数量' value={10000} />
+                    <Statistic title='无人机总数量' value={20000} />
                   </Col>
                   <Col span={12}>
-                    <Statistic title='运行中无人机' value={9000} />
+                    <Statistic title='运行中无人机' value={18000} />
                   </Col>
                   <Col span={12}>
-                    <Statistic title='当前省份无人机数量' value={target.uavCount} />
+                    <Statistic title='当前选取地区无人机数量' value={target.uavCount} />
                   </Col>
                   <Col span={12}>
-                    <Statistic title='当前省份运行中无人机' value={`${target.uavCount ? ~~(target.uavCount! / 2) : 0}`} />
+                    <Statistic title='当前选取地区运行中无人机' value={`${target.uavCount ? ~~(target.uavCount! / 2) : 0}`} />
                   </Col>
                 </Row>
               </ConfigProvider>
@@ -139,7 +158,9 @@ const CesiumMap: React.FC = () => {
           </div>
         </div>
         <div className="hide">
-          <div className="coordinate">Longitude: {longitude_ALL}° &nbsp;&nbsp;&nbsp; Latitude:{latitude_ALL}°</div>
+          <div className="coordinate">Longitude: {longitude_ALL}° &nbsp;&nbsp;&nbsp; Latitude:{latitude_ALL}°
+            &nbsp;&nbsp;&nbsp;Height: {height_ALL} m
+          </div>
         </div>
         {pickUavId && popup &&
           <div
@@ -160,8 +181,8 @@ const CesiumMap: React.FC = () => {
 
           </div>
         }
-        <div className="cesiumContainer" ref={cesiumContainerRef} onClick={handleClick}>
-        </div>
+        {test && <div className="cesiumContainer" ref={cesiumContainerRef} onClick={handleClick}>
+        </div>}
       </div>
     </div>
 

@@ -1,23 +1,27 @@
 import { DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT } from './Setting'
 import * as Cesium from "cesium";
-import {
-    findItemById,
-} from './methodsRepo'
 import { Mouse } from '../../../global-env';
+import switchProvinceView from './switchProvinceView';
+import resetAll from './resetAll';
 
 
 
-const addMouseActions = (props:Mouse) => {
+
+
+const addMouseActions = (props: Mouse) => {
     const {
         viewer,
         setLongitude,
         setLatitude,
         setPickUavId,
         setTarget,
-        dataPrimitive,
-        uavCountList
+        // dataPrimitive,
+        uavCountList,
+        setheight,
     } = props
-
+    const expandedProvinList = ['']
+    const currentLayer = ['TOP','MID','BOTTOM']
+    let nowLayer = currentLayer[1]
 
     let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
     handler.setInputAction(function onLeftClick(click: any) {
@@ -25,33 +29,51 @@ const addMouseActions = (props:Mouse) => {
 
         if (Cesium.defined(pickObject)) {
             // setPickId('')
-            // console.log(pickObject)
+
             if (pickObject.id) {
                 if (pickObject.id.name == 'UAV') {
                     // console.log('点击了对象:', pickObject.id);
                     setPickUavId(pickObject.id.id)
-                    let foundItem = findItemById(dataPrimitive.origin, pickObject.id.id)
-                    if (foundItem) {
-                        setTarget(item => ({
-                            ...item,
-                            id: foundItem.id,
-                            height: foundItem.height,
-                            longitude: foundItem.longitude,
-                            latitude: foundItem.latitude
-                        }))
-                    }
-                    // console.log(foundItem, 111112323)
-                    // console.log(typeof pickObject.id.id, pickObject.id.id, 11111)
+                    // let foundItem = findItemById(dataPrimitive.origin, pickObject.id.id)
+                    // if (foundItem) {
+                    //     setTarget(item => ({
+                    //         ...item,
+                    //         id: foundItem.id,
+                    //         height: foundItem.height,
+                    //         longitude: foundItem.longitude,
+                    //         latitude: foundItem.latitude
+                    //     }))
+                    // }
                 }
                 else if (pickObject.id.properties.level._value == 'province') {
                     setPickUavId('')
                     // console.log('点击了对象:', pickObject.id.properties.level._value);
+                    let count = uavCountList.find(item => item.name == pickObject.id.name)
+                    if (count) {
+                        setTarget(item => ({
+                            ...item, // 保留之前的状态
+                            province: pickObject.id.name,
+                            id: pickObject.id.id,
+                            uavCount: count.value
+                        }))
+                    }
+                    else {
+                        setTarget(item => ({
+                            ...item, // 保留之前的状态
+                            province: pickObject.id.name,
+                            id: pickObject.id.id,
+                            uavCount: 0
+                        }))
+                    }
+                }
+                else if (pickObject.id.properties.level._value == 'city') {
                     setTarget(item => ({
                         ...item, // 保留之前的状态
-                        province: pickObject.id.name,
+                        city: pickObject.id.name,
                         id: pickObject.id.id,
-                        uavCount: uavCountList[pickObject.id.name]
+                        uavCount: 1
                     }));
+
 
                 }
                 else {
@@ -84,6 +106,7 @@ const addMouseActions = (props:Mouse) => {
             setLongitude(longitude)
             setLatitude(latitude)
             let currentHeight = viewer.camera.positionCartographic.height
+            setheight(currentHeight)
             if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.polygon
                 && currentHeight > 850000) {
                 if (highlightedEntity !== pickedObject.id) {
@@ -116,16 +139,24 @@ const addMouseActions = (props:Mouse) => {
 
 
     // 添加双击事件
-    handler.setInputAction((doubleClick:any)=>{
+    handler.setInputAction((doubleClick: any) => {
         let pickObject = viewer.scene.pick(doubleClick.position)
         // console.log(pickObject)
-        if(Cesium.defined(pickObject)){
-            if(pickObject.id.properties.level._value == 'province'){
-                
+        if (Cesium.defined(pickObject)) {
+            if (pickObject.id.properties.level._value == 'province') {
+                if (!expandedProvinList.find(item=>item==pickObject.id.name)) {
+                    switchProvinceView(viewer, pickObject.id.name)
+                    expandedProvinList.push(pickObject.id.name)
+                }
             }
+            // console.log(pickObject)
+        }
+        else if(!Cesium.defined(pickObject)){
+            resetAll(viewer)
+            nowLayer = currentLayer[1]
         }
 
-    },Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK)
+    }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK)
 
     return handler
 }
