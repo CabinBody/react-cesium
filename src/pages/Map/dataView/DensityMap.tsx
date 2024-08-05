@@ -102,7 +102,7 @@ const DensityMap = (props: { province: string }) => {
 
     }, [props.province]);
 
-    return <div id="DensityMap" ref={chartRef} style={{ width: '600px', height: '600px' }} />;
+    return <div id="DensityMap" ref={chartRef} style={{ width: '32rem', height: '32rem' }} />;
 };
 
 export default DensityMap;

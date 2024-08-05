@@ -1,34 +1,62 @@
 import * as Cesium from "cesium";
 import { addWorldTerrainAsync, addOsmBuildingsAsync } from "./methodsRepo";
-import {CESIUMTOKEN,DEFAULTCAMERALONGITUDE,DEFAULTCAMERALATITUDE,DEFAULTCAMERAHEIGHT} from './Setting'
+import { DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT } from './Setting'
 import loadResources from "./loadResources";
 import addProvince from "./addProvince";
 
 
-const viewerInitial = (viewer:Cesium.Viewer) => {
 
-    Cesium.Ion.defaultAccessToken = CESIUMTOKEN
+const viewerInitial = (viewer: Cesium.Viewer,topContainerRef:any) => {
+
+    // 添加天地图影像服务
+    // let token = TIDITU_TOKEN;
+    // // 服务域名
+    // let tdtUrl = 'https://t{s}.tianditu.gov.cn/';
+    // // 服务负载子域
+    // let subdomains = ['0', '1', '2', '3', '4', '5', '6', '7'];
+    // let imgMap = new Cesium.UrlTemplateImageryProvider({
+    //     url: tdtUrl + 'DataServer?T=img_w&x={x}&y={y}&l={z}&tk=' + token,
+    //     subdomains: subdomains,
+    //     tilingScheme: new Cesium.WebMercatorTilingScheme(),
+    //     maximumLevel: 18
+    // });
+    // viewer.imageryLayers.addImageryProvider(imgMap);
+
+    // let iboMap = new Cesium.UrlTemplateImageryProvider({
+    //     url: tdtUrl + 'DataServer?T=ibo_w&x={x}&y={y}&l={z}&tk=' + token,
+    //     subdomains: subdomains,
+    //     tilingScheme: new Cesium.WebMercatorTilingScheme(),
+    //     maximumLevel: 10
+    // });
+    // viewer.imageryLayers.addImageryProvider(iboMap);
+
+
     // 设置相机参数
-    viewer.camera.setView({
+    viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT),
         orientation: {
             heading: Cesium.Math.toRadians(0), // 水平方向角度
             pitch: Cesium.Math.toRadians(-90.0), // 垂直方向角度
             roll: 0.0 // 滚动角度
-        }
+        },
+        duration:1
     });
 
 
     // 添加内置的地形和白膜建筑物
-    addWorldTerrainAsync(viewer)
-    addOsmBuildingsAsync(viewer)
+    // addWorldTerrainAsync(viewer)
+    // addOsmBuildingsAsync(viewer)
 
     // 添加第三方图层
-    viewer.dataSources.add(Cesium.GeoJsonDataSource.load("../../../../public/china.json", {
+    const mainMap = new Cesium.GeoJsonDataSource('mainMap')
+    mainMap.load("../../../../public/china.json", {
         fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.3),
         stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
         strokeWidth: 2,
-    }))
+    })
+
+    viewer.dataSources.add(mainMap)
+    topContainerRef.current.push(mainMap)
     // viewer.dataSources.add(Cesium.GeoJsonDataSource.load("../../../../public/Province/西藏自治区.json", {
     //     fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.3),
     //     stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
@@ -39,9 +67,9 @@ const viewerInitial = (viewer:Cesium.Viewer) => {
     // 取消默认的点击事件和控制视角
     viewer.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
     viewer.scene.screenSpaceCameraController.maximumZoomDistance = 6791711.819523133;//相机高度的最大值
-    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 900000;//相机的高度的最小值  
+    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 5000000;//相机的高度的最小值  
     viewer.scene.screenSpaceCameraController.enableRotate = false; // 禁用旋转
-    viewer.scene.screenSpaceCameraController.enableZoom = false; // 禁用缩放
+    // viewer.scene.screenSpaceCameraController.enableZoom = false; // 禁用缩放
     viewer.scene.screenSpaceCameraController.enableLook = false; // 禁用视角调整
     viewer.scene.screenSpaceCameraController.enableTilt = false; // 禁用倾斜
     viewer.scene.screenSpaceCameraController.enableTranslate = false; // 禁用平移
@@ -61,10 +89,8 @@ const viewerInitial = (viewer:Cesium.Viewer) => {
     // 中国省区市的坐标数据
     const province = data.province
 
-    addProvince(viewer, province)
-    
+    addProvince(viewer, province ,topContainerRef)
 
-    return viewer
 }
 
 export default viewerInitial

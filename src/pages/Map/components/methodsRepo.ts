@@ -80,10 +80,14 @@ function getUavCountList() {
     if (data) {
         uavCount = Object.entries(data).map((target: any) => ({
             name: target[1].province,
-            value: target[1].province_count
+            value: target[1].province_count,
+            cityList: target[1].city
         }));
+        // console.log(uavCount)
     }
-    else uavCount = []
+    else { 
+        uavCount=[]
+    }
     return uavCount
 }
 

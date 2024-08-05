@@ -8,6 +8,6 @@ export const DEFAULTCAMERALONGITUDE = 103.68957249677412
 
 export const DEFAULTCAMERALATITUDE = 34.285856181062144
 
-// const TIDITUTOKEN = '32887750f8cf1c0d28e57dd13fd9c9b2'
+export const TIDITU_TOKEN = '32887750f8cf1c0d28e57dd13fd9c9b2'
 // const targetLongitude = 108.9109251
 // const targetLatitude = 30.3731565

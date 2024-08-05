@@ -5,6 +5,7 @@ import { RootDispatch } from "./store"
 export type DataPoint = {
     name: string
     value:number
+    cityList:any[]
 }
 // 每个数据点的坐标
 export type Point = {
@@ -52,5 +53,13 @@ declare global {
         origin?: Point | null
         province?: string
         city?: string
+    }
+
+    type Layer ='TOP'|'MEDIUM'|'BOTTOM'
+
+    interface CurrentLocation {
+        layer:Layer
+        province:string
+        city:string
     }
 }

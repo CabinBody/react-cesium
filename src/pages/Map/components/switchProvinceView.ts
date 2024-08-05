@@ -4,7 +4,7 @@ import provincelist from '../../../../public/china.json'
 
 
 
-const switchProvinceView = (viewer: Cesium.Viewer, province: string) => {
+const switchProvinceView = (viewer: Cesium.Viewer, province: string, mediumContainerRef: any) => {
 
     fetch(`../../../../public/Province/${province}.json`).then(response => {
         if (!response.ok) {
@@ -47,7 +47,7 @@ const switchProvinceView = (viewer: Cesium.Viewer, province: string) => {
                 duration: 1
             })
         }
-        else{
+        else {
             viewer.camera.flyTo({
                 destination: Cesium.Cartesian3.fromDegrees(provinceCenter[0], provinceCenter[1], 2000000),
                 orientation: {
@@ -59,21 +59,23 @@ const switchProvinceView = (viewer: Cesium.Viewer, province: string) => {
             })
         }
 
-        viewer.dataSources.removeAll();
-        viewer.entities.removeAll()
-
-
-        viewer.dataSources.add(Cesium.GeoJsonDataSource.load(`../../../../public/Province/${province}.json`, {
+        // 生成城市实体
+        const proviceSlice = new Cesium.GeoJsonDataSource(province)
+        proviceSlice.load(`../../../../public/Province/${province}.json`, {
             fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.3),
             stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
             strokeWidth: 2,
-        }))
+        })
+        viewer.dataSources.add(proviceSlice)
+        
+        // console.log(proviceSlice)
+        mediumContainerRef.current.push(proviceSlice)
 
-
+        // 生成城市名称
         cityInfoList.forEach(item => {
             if (item) {
                 // console.log(item)
-                viewer.entities.add({
+                let singleEntity = viewer.entities.add({
                     position: Cesium.Cartesian3.fromDegrees(item.center[0], item.center[1]),
                     label: {
                         text: item.name,
@@ -86,15 +88,11 @@ const switchProvinceView = (viewer: Cesium.Viewer, province: string) => {
                         scaleByDistance: new Cesium.NearFarScalar(1000.0, 3.0, 5000.0, 0.7),
                     }
                 });
+                // console.log(singleEntity)
+                mediumContainerRef.current.push(singleEntity)
             }
         });
     })
-
-
-
-
-
-
 
 }
 

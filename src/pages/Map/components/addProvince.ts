@@ -1,10 +1,10 @@
-import { LabelCollection, Viewer, Cartesian3, Color, LabelStyle, NearFarScalar, VerticalOrigin } from "cesium";
+import {Viewer, Cartesian3, Color, LabelStyle, NearFarScalar, VerticalOrigin } from "cesium";
 
 
-const addProvince = (viewer: Viewer, province: any[]) => {
+const addProvince = (viewer: Viewer, province: any[],topContainerRef:any) => {
     province.forEach(item => {
         if (item.properties.centroid) {
-            viewer.entities.add({
+            let entity = viewer.entities.add({
                 position: Cartesian3.fromDegrees(item.properties.centroid[0], item.properties.centroid[1]),
                 label: {
                     text: item.properties.name,
@@ -17,6 +17,7 @@ const addProvince = (viewer: Viewer, province: any[]) => {
                     scaleByDistance: new NearFarScalar(1000.0, 3.0, 5000.0, 0.7),
                 }
             });
+            topContainerRef.current.push(entity)
         }
     });
 }
