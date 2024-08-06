@@ -20,6 +20,38 @@ html {
     // justify-content: center;
     // align-items: center;
 
+    .home_button_wrap {
+      background-color: rgb(53, 17, 255);
+      position: absolute;
+      z-index: 3;
+      left: 50%;
+      top: 10%;
+      margin-left: -50px;
+      margin-top: -25px;
+      
+
+      .home_button {
+        color: white;
+        font-size: 14px;
+        background-color: #0c5a56;
+        position: absolute;
+        z-index: 3;
+        width: 100px;
+        height: 50px;
+        border: 1px solid #242b09;
+        border-radius: 10px;
+      }
+
+
+      .home_button:hover {
+        background-color: #0c313a;
+      }
+    }
+    .home_button_wrap.close{
+      display: none;
+    }
+
+
     .cesiumContainer {
       position: absolute;
       bottom: 0;
@@ -65,16 +97,127 @@ html {
     }
 
     .pop {
+      color: #ffffff;
       position: absolute;
-      background-color: white;
-      border: 1px solid black;
-      padding: 10px;
       z-index: 2;
       border-radius: 15px;
+      display: flex;
+      overflow: hidden;
+
+      .uavInfo_content {
+        background-color: rgba(22, 43, 75, 0.671);
+        border: 1px solid rgba(51, 90, 163, 0.603);
+        // flex-direction: column;
+        padding: 20px;
+      }
+
+      .uavInfo_control {
+        row-gap: 20px;
+        margin-left: 5px;
+        background-color: rgba(22, 43, 75, 0.671);
+        border: 1px solid rgba(51, 90, 163, 0.603);
+        flex-direction: column;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .uavInfo_title {
+        font-size: 50px;
+        display: flex;
+      }
+
+      .uavInfo_title img {
+        height: 80px;
+        width: 80px;
+      }
+
+      .uav_control_form {
+        display: flex;
+        column-gap: 40px;
+      }
+
+      .uav_control_button {
+        background-color: #0c5a56;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .uav_control_button:hover {
+        background-color: #0c313a;
+      }
+
+    }
+
+    .pop span {
+      display: flex;
+      align-items: center;
+      column-gap: 23px;
+      margin-top: 5px;
+    }
+
+    .uav_control_input {
+      display: flex;
+      // flex-direction: row;
+    }
+
+    input[type="checkbox"] {
+      transform: scale(1.5);
+      /* 增大单选框 */
+    }
+
+    .radio-text {
+      font-size: 20px;
+      /* 增大文本 */
+    }
+
+    input[type="radio"] {
+      opacity: 0;
+      /* 隐藏默认的单选框 */
+      position: absolute;
+      /* 把单选框的透明度设置为0，使它不可见，但仍然可以被选中 */
+    }
+
+    input[type="radio"]+.radio-text::before {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      /* 单选框的宽度 */
+      height: 24px;
+      /* 单选框的高度 */
+      border: 2px solid #000;
+      /* 单选框的边框 */
+      border-radius: 50%;
+      /* 使其成为圆形 */
+      background-color: #fff;
+      /* 单选框的背景色 */
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    input[type="radio"]:checked+.radio-text::before {
+      background-color: #117466;
+      /* 选中时的背景色 */
+      border-color: #0c313a;
+      /* 选中时的边框色 */
+    }
+
+    .button_wrap {
+      padding: 20px 40px 0 40px;
+      display: flex;
+      justify-content: center;
+      justify-content: space-between
     }
 
 
+
+
     .info_wrap_left {
+      overflow: hidden;
       background-color: rgba(10, 31, 68, 0.7);
       display: flex;
       flex-direction: column;
@@ -90,7 +233,6 @@ html {
       .bupt_logo {
         height: 12%;
         width: auto;
-
       }
     }
 
@@ -135,7 +277,7 @@ html {
       flex-direction: column;
 
 
-      .barChart{
+      .barChart {
         width: 22rem;
         height: 100%
       }

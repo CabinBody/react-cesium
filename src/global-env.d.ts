@@ -55,7 +55,7 @@ declare global {
         city?: string
     }
 
-    type Layer ='TOP'|'MEDIUM'|'BOTTOM'
+    type Layer ='TOP'|'MEDIUM'|'BOTTOM'|'REALITY'
 
     interface CurrentLocation {
         layer:Layer

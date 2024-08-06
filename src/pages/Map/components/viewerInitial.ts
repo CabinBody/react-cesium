@@ -1,36 +1,18 @@
 import * as Cesium from "cesium";
-import { addWorldTerrainAsync, addOsmBuildingsAsync } from "./methodsRepo";
 import { DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT } from './Setting'
 import loadResources from "./loadResources";
 import addProvince from "./addProvince";
+import { MAPBOX_USER } from "./Setting";
 
 
+const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
+    let layer = new Cesium.MapboxStyleImageryProvider({
+        username: MAPBOX_USER.username,
+        styleId: 'clzi16g9c00h501pr4mtt3owf',
+        accessToken: MAPBOX_USER.token,
+    })
 
-const viewerInitial = (viewer: Cesium.Viewer,topContainerRef:any) => {
-
-    // 添加天地图影像服务
-    // let token = TIDITU_TOKEN;
-    // // 服务域名
-    // let tdtUrl = 'https://t{s}.tianditu.gov.cn/';
-    // // 服务负载子域
-    // let subdomains = ['0', '1', '2', '3', '4', '5', '6', '7'];
-    // let imgMap = new Cesium.UrlTemplateImageryProvider({
-    //     url: tdtUrl + 'DataServer?T=img_w&x={x}&y={y}&l={z}&tk=' + token,
-    //     subdomains: subdomains,
-    //     tilingScheme: new Cesium.WebMercatorTilingScheme(),
-    //     maximumLevel: 18
-    // });
-    // viewer.imageryLayers.addImageryProvider(imgMap);
-
-    // let iboMap = new Cesium.UrlTemplateImageryProvider({
-    //     url: tdtUrl + 'DataServer?T=ibo_w&x={x}&y={y}&l={z}&tk=' + token,
-    //     subdomains: subdomains,
-    //     tilingScheme: new Cesium.WebMercatorTilingScheme(),
-    //     maximumLevel: 10
-    // });
-    // viewer.imageryLayers.addImageryProvider(iboMap);
-
-
+    viewer.imageryLayers.addImageryProvider(layer)
     // 设置相机参数
     viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT),
@@ -39,13 +21,9 @@ const viewerInitial = (viewer: Cesium.Viewer,topContainerRef:any) => {
             pitch: Cesium.Math.toRadians(-90.0), // 垂直方向角度
             roll: 0.0 // 滚动角度
         },
-        duration:1
+        duration: 1
     });
 
-
-    // 添加内置的地形和白膜建筑物
-    // addWorldTerrainAsync(viewer)
-    // addOsmBuildingsAsync(viewer)
 
     // 添加第三方图层
     const mainMap = new Cesium.GeoJsonDataSource('mainMap')
@@ -57,11 +35,8 @@ const viewerInitial = (viewer: Cesium.Viewer,topContainerRef:any) => {
 
     viewer.dataSources.add(mainMap)
     topContainerRef.current.push(mainMap)
-    // viewer.dataSources.add(Cesium.GeoJsonDataSource.load("../../../../public/Province/西藏自治区.json", {
-    //     fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.3),
-    //     stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
-    //     strokeWidth: 2,
-    // }))
+
+
 
 
     // 取消默认的点击事件和控制视角
@@ -89,7 +64,7 @@ const viewerInitial = (viewer: Cesium.Viewer,topContainerRef:any) => {
     // 中国省区市的坐标数据
     const province = data.province
 
-    addProvince(viewer, province ,topContainerRef)
+    addProvince(viewer, province, topContainerRef)
 
 }
 

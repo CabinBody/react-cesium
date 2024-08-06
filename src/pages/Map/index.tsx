@@ -14,12 +14,16 @@ import { CESIUMTOKEN } from './components/Setting';
 import switchProvinceView from './components/switchProvinceView';
 import resetAll from './components/resetAll';
 import switchCityView from './components/switchCityView';
+import { getDataPrimitive, findItemById } from "./components/methodsRepo"
+import uavImg from '../../asset/UAV.png'
+import switchUavView from './components/switchUavView';
 
 
 
 
 const CesiumMap: React.FC = () => {
-  // const dispatch: RootDispatch = useDispatch()
+  const [showBackBnt, setShowBackBnt] = useState(false)
+  const [selectedOption, setSelectedOption] = useState('');
   const [height_ALL, setheight] = useState(0)
   const [longitude_ALL, setLongitude] = useState(0)
   const [latitude_ALL, setLatitude] = useState(0)
@@ -38,11 +42,13 @@ const CesiumMap: React.FC = () => {
   })
 
   const cesiumContainerRef = useRef<Cesium.Viewer | any>(null)
+  const viewerRef = useRef<Cesium.Viewer | any>(null)
+  const currentRef = useRef<CurrentLocation | any>(null)
   const topContainerRef = useRef<any[]>([])
   const mediumContainerRef = useRef<any[]>([])
   const bottomContainerRef = useRef<any[]>([])
 
-  const [isShowMediumLayer, setIsShowMediumLayer] = useState(false)
+  const [isShowSideBar, setIsShowSideBar] = useState(true)
 
   const [popup, setPopup] = useState<PopXY | null>(null);
 
@@ -60,9 +66,14 @@ const CesiumMap: React.FC = () => {
     const uavCountList: DataPoint[] = data.uavCountList
 
     Cesium.Ion.defaultAccessToken = CESIUMTOKEN
+
+
+
+
+
     // 初始化Cesium Viewer
     const viewer = new Cesium.Viewer(cesiumContainerRef.current, {
-
+      // baseLayer: new Cesium.ImageryLayer(layer),
       // 禁用infoBox
       infoBox: false,
       geocoder: false,
@@ -75,16 +86,17 @@ const CesiumMap: React.FC = () => {
       timeline: false,
       vrButton: false,
     });
+    viewerRef.current = viewer
 
-    viewerInitial(viewer, topContainerRef)
+
+
     const currentState: CurrentLocation = {
       layer: 'TOP',
       province: '',
       city: ''
     }
-
-
-
+    currentRef.current = currentState
+    viewerInitial(viewer, topContainerRef)
 
 
     // 添加点击事件
@@ -111,18 +123,22 @@ const CesiumMap: React.FC = () => {
         if (pickObject.id) {
           // console.log('点击了对象:', pickObject.id);
           if (pickObject.id.name == 'UAV') {
+            let dataPrimitive = getDataPrimitive(currentState.province, currentState.city)
             // console.log('点击了对象:', pickObject.id);
             setPickUavId(pickObject.id.id)
-            // let foundItem = findItemById(dataPrimitive.origin, pickObject.id.id)
-            // if (foundItem) {
-            //     setTarget(item => ({
-            //         ...item,
-            //         id: foundItem.id,
-            //         height: foundItem.height,
-            //         longitude: foundItem.longitude,
-            //         latitude: foundItem.latitude
-            //     }))
-            // }
+            let foundItem = findItemById(dataPrimitive.origin, pickObject.id.id)
+            if (foundItem) {
+              setTarget(item => ({
+                ...item,
+                id: foundItem.id,
+                height: foundItem.height,
+                longitude: foundItem.longitude,
+                latitude: foundItem.latitude,
+                degree: foundItem.degree,
+                pitch: foundItem.pitch,
+                roll: foundItem.roll
+              }))
+            }
           }
           else if (pickObject.id.properties) {
             let entityType = pickObject.id.properties.level._value
@@ -149,6 +165,7 @@ const CesiumMap: React.FC = () => {
               }
             }
             if (entityType == 'city' || entityType == 'district') {
+              setPickUavId('')
               currentState.city = pickObject.id.name
               let count: any
               let target = uavCountList.find(item => item.name == currentState.province)?.cityList
@@ -184,9 +201,8 @@ const CesiumMap: React.FC = () => {
       let pickedObject = viewer.scene.pick(movement.endPosition)
       // console.log(pickedObject)
       if (cartesian) {
-        let currentHeight = viewer.camera.positionCartographic.height
         if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.polygon
-          && currentHeight > 50000) {
+          && currentState.layer != 'BOTTOM') {
           if (highlightedEntity !== pickedObject.id) {
             if (highlightedEntity) {
               highlightedEntity.polygon.material = defaultColor
@@ -217,52 +233,95 @@ const CesiumMap: React.FC = () => {
             currentState.layer = 'MEDIUM'
             mediumContainerRef.current.splice(0, mediumContainerRef.current.length)
             switchProvinceView(viewer, pickObject.id.name, mediumContainerRef)
-            setIsShowMediumLayer(true)
           }
         }
 
         else if (currentState.layer == 'MEDIUM') {
           if (pickObject.id.properties) {
             if (pickObject.id.properties.level._value == 'city' || 'district') {
-              switchCityView(viewer, currentState.province, currentState.city)
+              currentState.layer = 'BOTTOM'
+              setIsShowSideBar(false)
+              switchCityView(viewer, currentState.province, currentState.city, bottomContainerRef)
+              mediumContainerRef.current.forEach(item => {
+                item.show = false
+              })
             }
           }
         }
+        else if (currentState.layer == 'BOTTOM' || currentState.layer == 'REALITY') {
+          if (pickObject.id.name == 'UAV') {
+            let dataPrimitive = getDataPrimitive(currentState.province, currentState.city)
+            let foundItem = findItemById(dataPrimitive.origin, pickObject.id.id)
+            if (foundItem) {
+              currentState.layer = 'REALITY'
+              viewer.imageryLayers.remove(viewer.imageryLayers.get(1))
+              switchUavView(viewer, foundItem)
+              // console.log(viewer.imageryLayers.get(1)
+              setShowBackBnt(true)
+              bottomContainerRef.current.forEach(item => {
+                if (item.name != 'UAV') {
+                  item.show = false
+                }
+              })
+              setPickUavId('')
+              // console.log(bottomContainerRef.current)
+            }
+          }
 
+        }
       }
-      else {
+      else if (currentState.layer != 'REALITY' && currentState.layer != 'TOP') {
         currentState.layer = 'TOP'
-        resetAll(viewer, topContainerRef, mediumContainerRef)
+        setIsShowSideBar(true)
+        resetAll(viewer, topContainerRef, mediumContainerRef, bottomContainerRef)
       }
 
     }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK)
 
 
 
-
+    // console.log(cesiumContainerRef)
     return () => {
       viewer.destroy()
       setPickUavId('')
+      setIsShowSideBar(true)
+      setShowBackBnt(false)
     }
-  }, [])
+  }, [cesiumContainerRef.current])
 
-  useEffect(() => {
-    mediumContainerRef.current.forEach(entity => {
-      if (entity.name) {
-      }
-      entity.show = isShowMediumLayer
+  const rebackMap = () => {
+    setShowBackBnt(false)
+    viewerRef.current.entities.removeAll()
+    viewerRef.current.dataSources.removeAll()
+    mediumContainerRef.current = []
+    bottomContainerRef.current = []
+    viewerInitial(viewerRef.current, topContainerRef)
+    setIsShowSideBar(true)
+    currentRef.current.layer = 'TOP'
+
+    topContainerRef.current.forEach((item: any) => {
+      item.show = true
     })
-  }, [isShowMediumLayer])
+    // console.log(currentRef)
 
+  }
+  const handleChange = (e: any) => {
+    setSelectedOption(e.target.value);
+  };
+
+  const handleSubmit = (e: any) => {
+    e.preventDefault();
+    alert(`Selected option: ${selectedOption}`);
+  };
 
   return (
     <div className='total_wrap'>
       <div className="container">
-        <div className='info_wrap_left'>
+        {isShowSideBar && <div className='info_wrap_left'>
           <img className='bupt_logo' src={logo} alt="" />
           <div className="sidebar" style={{ height: '3rem' }}>
             <div className="sidebar-content">
-              <button onClick={() => { setIsShowMediumLayer(!isShowMediumLayer) }}>11111111</button>
+              {/* <button onClick={() => { setIsShowMediumLayer(!isShowMediumLayer) }}>test</button> */}
               选取省份：{target?.province ? target.province : ''}
               {target.province && <button className='clearButton' onClick={() => { setTarget(item => ({ ...item, province: '' })) }}>
                 <img src="../../asset/close.png" alt="" />
@@ -306,8 +365,8 @@ const CesiumMap: React.FC = () => {
               当前时间: &nbsp; <CurrentTime></CurrentTime>
             </div>
           </div>
-        </div>
-        <div className={`info_wrap_right ${target.province ? 'show' : ''}`}>
+        </div>}
+        {isShowSideBar && <div className={`info_wrap_right ${target.province ? 'show' : ''}`}>
           <div className="sidebar" style={{ height: '100px' }}>
             <div className="sidebar-content">
               市（区）无人机分布情况：
@@ -323,7 +382,7 @@ const CesiumMap: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
         <div className="hide">
           <div className="coordinate">Longitude: {longitude_ALL}° &nbsp;&nbsp;&nbsp; Latitude:{latitude_ALL}°
             &nbsp;&nbsp;&nbsp;Height: {height_ALL} m
@@ -336,18 +395,66 @@ const CesiumMap: React.FC = () => {
               position: 'absolute',
               top: popup.y,
               left: popup.x,
-              backgroundColor: 'white',
-              border: '1px solid black',
-              padding: '10px',
             }}
           >
-            Id: {target?.id} <br />
-            Height: {target?.height} <br />
-            Longitude: {target?.longitude} <br />
-            Latitude: {target?.latitude} <br />
+            <div className='uavInfo_content'>
+              <span>Uid: {target.id}</span>
+              <span className='uavInfo_title' >
+                <span>U3 GO2453</span>
+                <img src={uavImg} alt="" />
+              </span>
+              <span>Dir: 20km-H45°{target.degree!.toFixed(1)}-P30°{target.pitch!.toFixed(1)}-R{target.roll!.toFixed(1)}</span>
+              <span>
+                <div>Hgt: {target.height!.toFixed(2)}m</div>
+                <div>Log: {target.longitude!.toFixed(2)}°</div>
+                <div>Lat: {target.latitude!.toFixed(2)}°</div>
+              </span>
+            </div>
+            <div className='uavInfo_control'>
+              <span className='uavInfo_title' style={{ fontSize: '30px' }}>控制策略</span>
+              <div>
+                <form onSubmit={handleSubmit} >
+                  <div className='uav_control_form'>
+                    <div className='uav_control_input'>
+                      <label className={selectedOption === 'PersuasionBack' ? 'checked' : ''}>
+                        <input
+                          type="radio"
+                          name="option"
+                          value="PersuasionBack"
+                          checked={selectedOption === 'PersuasionBack'}
+                          onChange={handleChange}
+                        />
+                        <span className='radio-text'>劝返</span>
+                        <span>Persuasion-Back</span>
+                      </label>
+                    </div>
+                    <div className='uav_control_input'>
+                      <label className={selectedOption === 'Forced-Landing' ? 'checked' : ''}>
+                        <input
+                          type="radio"
+                          name="option"
+                          value="ForcedLanding"
+                          checked={selectedOption === 'ForcedLanding'}
+                          onChange={handleChange}
+                        />
+                        <span className='radio-text'>迫降</span>
+                        <span >Forced-Landing</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className='button_wrap'>
+                    <button className='uav_control_button' type="submit">Submit</button>
+                    <button className='uav_control_button' onClick={() => { setPickUavId('') }}>Cancel</button>
+                  </div>
+                </form>
 
+              </div>
+            </div>
           </div>
         }
+        <div className={`home_button_wrap ${showBackBnt ? '' : 'close'}`}>
+          <button className='home_button' onClick={() => { rebackMap() }}>返回/BACK</button>
+        </div>
         <div className="cesiumContainer" ref={cesiumContainerRef} onClick={handleClick}>
         </div>
       </div>

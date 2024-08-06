@@ -1,10 +1,8 @@
-import { getDataPrimitive,getProvinceList,getUavCountList } from "./methodsRepo"
+import {getProvinceList,getUavCountList } from "./methodsRepo"
 
 
 const loadResources = () => {
-    // 处理键盘按下事件
 
-    // console.log(dataPrimitive.origin)
     const province = getProvinceList()
 
     const uavCountList = getUavCountList()
