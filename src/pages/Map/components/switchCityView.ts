@@ -1,4 +1,5 @@
 import * as Cesium from 'cesium'
+import 'cesium/Widgets/widgets.css'
 import addUavEntity from './addUavEntity'
 
 const switchCityView = (viewer: Cesium.Viewer, province: string, city: string, bottomContainerRef: any) => {

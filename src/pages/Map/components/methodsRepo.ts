@@ -1,4 +1,5 @@
 import { Point, DataFrame } from "../../../global-env";
+import 'cesium/Widgets/widgets.css'
 import * as Cesium from "cesium";
 import random_points from '../../../../public/virtual_UAV_DataPoint.json'
 import provinceList from '../../../../public/china.json'
@@ -45,7 +46,7 @@ function getDataPrimitive(province: string, city: string) {
         hprList: [],
     }
 
-    const cartesianPointList = pointList.map((point) => Cesium.Cartesian3.fromDegrees(point.longitude, point.latitude, 500))
+    const cartesianPointList = pointList.map((point) => Cesium.Cartesian3.fromDegrees(point.longitude, point.latitude, 2000))
 
     const hprList = [] as any[]
     pointList.map((item) => {
@@ -85,8 +86,8 @@ function getUavCountList() {
         }));
         // console.log(uavCount)
     }
-    else { 
-        uavCount=[]
+    else {
+        uavCount = []
     }
     return uavCount
 }

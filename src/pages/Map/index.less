@@ -21,20 +21,20 @@ html {
     // align-items: center;
 
     .home_button_wrap {
-      background-color: rgb(53, 17, 255);
+      display: flex;
       position: absolute;
       z-index: 3;
       left: 50%;
       top: 10%;
-      margin-left: -50px;
+      margin-left: -570px;
       margin-top: -25px;
+      column-gap: 30px;
       
 
       .home_button {
         color: white;
         font-size: 14px;
         background-color: #0c5a56;
-        position: absolute;
         z-index: 3;
         width: 100px;
         height: 50px;
@@ -51,7 +51,10 @@ html {
       display: none;
     }
 
-
+    .rectangle_drawer{
+      position: absolute;
+      z-index: 1;
+    }
     .cesiumContainer {
       position: absolute;
       bottom: 0;

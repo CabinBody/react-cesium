@@ -1,7 +1,6 @@
 import * as Cesium from 'cesium'
 import provincelist from '../../../../public/china.json'
-
-
+import 'cesium/Widgets/widgets.css'
 
 
 const switchProvinceView = (viewer: Cesium.Viewer, province: string, mediumContainerRef: any) => {

@@ -1,4 +1,5 @@
 import * as Cesium from 'cesium'
+import 'cesium/Widgets/widgets.css'
 import { getDataPrimitive } from './methodsRepo'
 
 const addUavEntity = (
@@ -23,7 +24,7 @@ const addUavEntity = (
                     position: position,
                     model: {
                         uri: '../../../../public/UAV.glb',
-                        minimumPixelSize: 32,
+                        minimumPixelSize: 80,
                     },
                     orientation: Cesium.Transforms.headingPitchRollQuaternion(position, hpr)
                 });

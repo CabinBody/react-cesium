@@ -1,4 +1,5 @@
 import * as Cesium from "cesium";
+import 'cesium/Widgets/widgets.css'
 import { DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT } from './Setting'
 import loadResources from "./loadResources";
 import addProvince from "./addProvince";
@@ -6,13 +7,38 @@ import { MAPBOX_USER } from "./Setting";
 
 
 const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
-    let layer = new Cesium.MapboxStyleImageryProvider({
-        username: MAPBOX_USER.username,
-        styleId: 'clzi16g9c00h501pr4mtt3owf',
-        accessToken: MAPBOX_USER.token,
-    })
+    
+    // let building = new Cesium.MapboxStyleImageryProvider({
+    //     username: MAPBOX_USER.username,
+    //     styleId: 'clzjerkvb00kf01qyazpp8787',
+    //     accessToken: MAPBOX_USER.token,
+    // })
 
-    viewer.imageryLayers.addImageryProvider(layer)
+    // viewer.imageryLayers.addImageryProvider(building)
+
+    // let layer = new Cesium.MapboxStyleImageryProvider({
+    //     username: MAPBOX_USER.username,
+    //     styleId: 'clzi16g9c00h501pr4mtt3owf',
+    //     accessToken: MAPBOX_USER.token,
+    // })
+
+    // viewer.imageryLayers.addImageryProvider(layer)
+
+    //天地图影像服务
+    // let token = TIDITU_TOKEN;
+    // // 服务域名
+    // let tdtUrl = 'https://t{s}.tianditu.gov.cn/';
+    // // 服务负载子域
+    // let subdomains = ['0', '1', '2', '3', '4', '5', '6', '7'];
+    // let imgMap = new Cesium.UrlTemplateImageryProvider({
+    //     url: tdtUrl + 'DataServer?T=img_w&x={x}&y={y}&l={z}&tk=' + token,
+    //     subdomains: subdomains,
+    //     tilingScheme: new Cesium.WebMercatorTilingScheme(),
+    //     maximumLevel: 18
+    // });
+    // viewer.imageryLayers.addImageryProvider(imgMap)
+
+
     // 设置相机参数
     viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT),
@@ -58,6 +84,7 @@ const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
     viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a1f44').withAlpha(0.5)
     viewer.scene.skyBox.show = false
     viewer.scene.moon.show = false
+    viewer.scene.sun.show = true
 
     const data = loadResources()
 

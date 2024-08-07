@@ -1,7 +1,7 @@
 import './index.less'
 import React, { useEffect, useRef, useState } from "react";
-import './index.less'
 import * as Cesium from 'cesium'
+import 'cesium/Widgets/widgets.css'
 import { DataPoint, Point, PopXY } from '../../global-env';
 import viewerInitial from './components/viewerInitial';
 import loadResources from './components/loadResources';
@@ -10,21 +10,25 @@ import { Col, Row, Statistic, ConfigProvider, Empty } from 'antd';
 import CurrentTime from './components/currentTime'
 import BarChart from './dataView/BarChart';
 import DensityMap from './dataView/DensityMap';
-import { CESIUMTOKEN } from './components/Setting';
+import { CESIUMTOKEN, MAPBOX_USER } from './components/Setting';
 import switchProvinceView from './components/switchProvinceView';
 import resetAll from './components/resetAll';
 import switchCityView from './components/switchCityView';
 import { getDataPrimitive, findItemById } from "./components/methodsRepo"
 import uavImg from '../../asset/UAV.png'
 import switchUavView from './components/switchUavView';
+import differentiatedDisplay from './components/differentiatedDisplay';
+import RectangleDrawer from './components/RectangleDrawer';
 
 
 
 
 const CesiumMap: React.FC = () => {
+  const [onDraw, setOnDraw] = useState(true)
   const [showBackBnt, setShowBackBnt] = useState(false)
   const [selectedOption, setSelectedOption] = useState('');
-  const [height_ALL, setheight] = useState(0)
+  const [cameraHeight, setCameraHeight] = useState(0)
+  const [height_ALL, setheight] = useState('')
   const [longitude_ALL, setLongitude] = useState(0)
   const [latitude_ALL, setLatitude] = useState(0)
   const [pickUavId, setPickUavId] = useState('')
@@ -42,13 +46,15 @@ const CesiumMap: React.FC = () => {
   })
 
   const cesiumContainerRef = useRef<Cesium.Viewer | any>(null)
-  const viewerRef = useRef<Cesium.Viewer | any>(null)
+  const [viewer, setViewer] = useState<Cesium.Viewer | null>(null)
   const currentRef = useRef<CurrentLocation | any>(null)
   const topContainerRef = useRef<any[]>([])
   const mediumContainerRef = useRef<any[]>([])
   const bottomContainerRef = useRef<any[]>([])
 
   const [isShowSideBar, setIsShowSideBar] = useState(true)
+  const [isPaused, setIsPaused] = useState(true)
+  const [speedMultiplier, setSpeedMultiplier] = useState(1)
 
   const [popup, setPopup] = useState<PopXY | null>(null);
 
@@ -56,6 +62,16 @@ const CesiumMap: React.FC = () => {
   const handleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     setPopup({ x: event.clientX, y: event.clientY });
   };
+
+  const imageryProviders = [
+    // new Cesium.ImageryLayer.fromWorldImagery(),,
+    Cesium.ImageryLayer.fromProviderAsync(Cesium.IonImageryProvider.fromAssetId(2), {}),
+    new Cesium.ImageryLayer(new Cesium.MapboxStyleImageryProvider({
+      username: MAPBOX_USER.username,
+      styleId: 'clzi16g9c00h501pr4mtt3owf',
+      accessToken: MAPBOX_USER.token,
+    }))
+  ];
 
   useEffect(() => {
 
@@ -67,13 +83,9 @@ const CesiumMap: React.FC = () => {
 
     Cesium.Ion.defaultAccessToken = CESIUMTOKEN
 
-
-
-
-
     // 初始化Cesium Viewer
     const viewer = new Cesium.Viewer(cesiumContainerRef.current, {
-      // baseLayer: new Cesium.ImageryLayer(layer),
+      baseLayer: imageryProviders[0],
       // 禁用infoBox
       infoBox: false,
       geocoder: false,
@@ -86,8 +98,8 @@ const CesiumMap: React.FC = () => {
       timeline: false,
       vrButton: false,
     });
-    viewerRef.current = viewer
-
+    setViewer(viewer)
+    viewer.imageryLayers.add(imageryProviders[1])
 
 
     const currentState: CurrentLocation = {
@@ -99,27 +111,27 @@ const CesiumMap: React.FC = () => {
     viewerInitial(viewer, topContainerRef)
 
 
-    // 添加点击事件
-    // 单击事件设置
+
+
+    // 添加点击事件单击事件设置
     let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
     handler.setInputAction(function onLeftClick(click: any) {
       let pickObject = viewer.scene.pick(click.position)
-      let position = new Cesium.Cartesian2(click.clientX, click.clientY);
-      let cartesian = viewer.camera.pickEllipsoid(position, viewer.scene.globe.ellipsoid);
+      let pickedPosition = viewer.scene.pickPosition(click.position)
 
-      if (cartesian) {
-        let cartographic = Cesium.Cartographic.fromCartesian(cartesian)
+      if (pickedPosition) {
+        let cartographic = Cesium.Cartographic.fromCartesian(pickedPosition)
         let longitude = Cesium.Math.toDegrees(cartographic.longitude)
         let latitude = Cesium.Math.toDegrees(cartographic.latitude)
-        // 相机和鼠标一起动
+        let height = cartographic.height.toFixed(2)
+        let cHeight = viewer.camera.positionCartographic.height
         setLongitude(longitude)
         setLatitude(latitude)
-        let currentHeight = viewer.camera.positionCartographic.height
-        setheight(currentHeight)
+        setheight(height)
+        setCameraHeight(cHeight)
       }
       if (Cesium.defined(pickObject)) {
         // setPickId('')
-
         if (pickObject.id) {
           // console.log('点击了对象:', pickObject.id);
           if (pickObject.id.name == 'UAV') {
@@ -131,13 +143,30 @@ const CesiumMap: React.FC = () => {
               setTarget(item => ({
                 ...item,
                 id: foundItem.id,
-                height: foundItem.height,
+                // height: foundItem.height,
+                height: 2000,
                 longitude: foundItem.longitude,
                 latitude: foundItem.latitude,
                 degree: foundItem.degree,
                 pitch: foundItem.pitch,
                 roll: foundItem.roll
               }))
+            }
+            else {
+              console.log(pickObject.id)
+              setTarget(item => ({
+                ...item,
+                id: pickObject.id.id,
+              }))
+              if (pickObject.id.position._value) {
+                let cartographic = Cesium.Cartographic.fromCartesian(pickObject.id.position._value)
+                setTarget(item => ({
+                  ...item,
+                  height: Cesium.Math.toDegrees(cartographic.height),
+                  longitude: Cesium.Math.toDegrees(cartographic.longitude),
+                  latitude: Cesium.Math.toDegrees(cartographic.latitude),
+                }))
+              }
             }
           }
           else if (pickObject.id.properties) {
@@ -183,6 +212,9 @@ const CesiumMap: React.FC = () => {
           else {
             setPickUavId('')
           }
+        }
+        else {
+          setPickUavId('')
         }
       }
       else {
@@ -254,7 +286,9 @@ const CesiumMap: React.FC = () => {
             let foundItem = findItemById(dataPrimitive.origin, pickObject.id.id)
             if (foundItem) {
               currentState.layer = 'REALITY'
-              viewer.imageryLayers.remove(viewer.imageryLayers.get(1))
+
+              // viewer.imageryLayers.get(1).show = false
+
               switchUavView(viewer, foundItem)
               // console.log(viewer.imageryLayers.get(1)
               setShowBackBnt(true)
@@ -286,16 +320,20 @@ const CesiumMap: React.FC = () => {
       setPickUavId('')
       setIsShowSideBar(true)
       setShowBackBnt(false)
+      setIsPaused(true)
+      setSpeedMultiplier(1)
     }
-  }, [cesiumContainerRef.current])
+  }, [])
 
   const rebackMap = () => {
     setShowBackBnt(false)
-    viewerRef.current.entities.removeAll()
-    viewerRef.current.dataSources.removeAll()
+    if (viewer) {
+      viewer.entities.removeAll()
+      viewer.dataSources.removeAll()
+      viewerInitial(viewer, topContainerRef)
+    }
     mediumContainerRef.current = []
     bottomContainerRef.current = []
-    viewerInitial(viewerRef.current, topContainerRef)
     setIsShowSideBar(true)
     currentRef.current.layer = 'TOP'
 
@@ -313,6 +351,66 @@ const CesiumMap: React.FC = () => {
     e.preventDefault();
     alert(`Selected option: ${selectedOption}`);
   };
+
+  // 跳到第一个demo
+  const displayFirstDemo = () => {
+    bottomContainerRef.current.forEach(item => {
+      item.show = false
+    })
+    if (viewer) {
+      differentiatedDisplay(viewer)
+    }
+  }
+
+  const displaySecondDemo = () => {
+
+  }
+  // 控制动画开始暂停
+  const handleStartPause = () => {
+    if (viewer) {
+      if (isPaused) {
+        viewer.clock.shouldAnimate = true;
+      } else {
+        viewer.clock.shouldAnimate = false;
+      }
+      setIsPaused(!isPaused);
+    }
+  };
+  // 复位动画
+  const handleReset = () => {
+    if (viewer) {
+      viewer.clock.currentTime = viewer.clock.startTime.clone();
+      viewer.clock.shouldAnimate = false;
+      setIsPaused(true);
+    }
+  };
+  // 控制速度
+  const plusSpeed = () => {
+    if (viewer) {
+      if (viewer.clock.multiplier < 100) {
+        viewer.clock.multiplier = viewer.clock.multiplier + 10
+        setSpeedMultiplier(viewer.clock.multiplier)
+      }
+    }
+  }
+  // 改变动画速度
+  const slowSpeed = () => {
+    if (viewer) {
+      if (viewer.clock.multiplier > -100) {
+
+        viewer.clock.multiplier = viewer.clock.multiplier - 10
+        setSpeedMultiplier(viewer.clock.multiplier)
+      }
+    }
+  }
+
+  // 切换影像
+  const switchLayer = () => {
+    if (viewer) {
+      viewer.imageryLayers.raiseToTop(viewer.imageryLayers.get(0))
+    }
+  }
+
 
   return (
     <div className='total_wrap'>
@@ -385,7 +483,7 @@ const CesiumMap: React.FC = () => {
         </div>}
         <div className="hide">
           <div className="coordinate">Longitude: {longitude_ALL}° &nbsp;&nbsp;&nbsp; Latitude:{latitude_ALL}°
-            &nbsp;&nbsp;&nbsp;Height: {height_ALL} m
+            &nbsp;&nbsp;&nbsp;Height: {height_ALL} m &nbsp;&nbsp;cameraHeight: {cameraHeight}
           </div>
         </div>
         {pickUavId && popup &&
@@ -453,8 +551,21 @@ const CesiumMap: React.FC = () => {
           </div>
         }
         <div className={`home_button_wrap ${showBackBnt ? '' : 'close'}`}>
+
+          <button className='home_button' onClick={switchLayer}>Switch</button>
           <button className='home_button' onClick={() => { rebackMap() }}>返回/BACK</button>
+          <button className='home_button' onClick={() => { displayFirstDemo() }}>Demo演示 01</button>
+          <button className='home_button' onClick={() => { displaySecondDemo() }}>Demo演示 02</button>
+          <button className='home_button' onClick={handleStartPause}>{isPaused ? 'Start' : 'Pause'}</button>
+          <button className='home_button' onClick={handleReset}>Reset</button>
+          <button className='home_button' onClick={plusSpeed}>Boost</button>
+          <span style={{ color: 'white', fontSize: '30px' }}>{speedMultiplier}</span>
+          <button className='home_button' onClick={slowSpeed}>Slow</button>
         </div>
+        <div className={`home_button_wrap ${!showBackBnt ? '' : 'close'}`} style={{marginLeft:'0'}}>
+          <button className='home_button' onClick={() => { setOnDraw(!onDraw) }}>{`${onDraw ? 'Draw' : 'Drawing'}`}</button>
+        </div>
+        {!onDraw && <div className='rectangle_drawer'><RectangleDrawer ></RectangleDrawer></div>}
         <div className="cesiumContainer" ref={cesiumContainerRef} onClick={handleClick}>
         </div>
       </div>
