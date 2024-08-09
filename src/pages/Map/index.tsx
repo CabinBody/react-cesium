@@ -2,7 +2,7 @@ import './index.less'
 import React, { useEffect, useRef, useState } from "react";
 import * as Cesium from 'cesium'
 import 'cesium/Widgets/widgets.css'
-import { DataPoint, Point, PopXY } from '../../global-env';
+import { DataPoint, Point, PopXY, ConfinedArea } from '../../global-env';
 import viewerInitial from './components/viewerInitial';
 import loadResources from './components/loadResources';
 import logo from '../../asset/buptLogo.png'
@@ -16,14 +16,15 @@ import resetAll from './components/resetAll';
 import switchCityView from './components/switchCityView';
 import { getDataPrimitive, findItemById } from "./components/methodsRepo"
 import uavImg from '../../asset/UAV.png'
+import confineImg from '../../asset/confine.png'
 import switchUavView from './components/switchUavView';
-import differentiatedDisplay from './components/differentiatedDisplay';
-import RectangleDrawer from './components/RectangleDrawer';
-
+import SubmitSuccess from './components/SubmitSuccess';
 
 
 
 const CesiumMap: React.FC = () => {
+  const subsription = 'Drone flight restrictions ensure safety, prevent accidents, protect privacy, and comply with regulations to avoid interference and safeguard sensitive areas.'
+  const [controlSignal, setControlSignal] = useState('')
   const [onDraw, setOnDraw] = useState(true)
   const [showBackBnt, setShowBackBnt] = useState(false)
   const [selectedOption, setSelectedOption] = useState('');
@@ -35,7 +36,7 @@ const CesiumMap: React.FC = () => {
   const [target, setTarget] = useState<Point>({
     province: '北京市',
     city: '',
-    id: 0,
+    id: '',
     longitude: 0,
     latitude: 0,
     height: 0,
@@ -44,6 +45,12 @@ const CesiumMap: React.FC = () => {
     roll: 0,
     uavCount: 0
   })
+  const targetRef = useRef<any>([])
+  const signalRef = useRef<any>(null)
+
+  const confinedAreaWrapRef = useRef<ConfinedArea[] | null>(null)
+  const targetAreaRef = useRef<ConfinedArea | null>(null)
+  const [isConfigured, setIsConfigured] = useState(false)
 
   const cesiumContainerRef = useRef<Cesium.Viewer | any>(null)
   const [viewer, setViewer] = useState<Cesium.Viewer | null>(null)
@@ -51,18 +58,30 @@ const CesiumMap: React.FC = () => {
   const topContainerRef = useRef<any[]>([])
   const mediumContainerRef = useRef<any[]>([])
   const bottomContainerRef = useRef<any[]>([])
+  const drawModeRef = useRef<any>(null)
+  const drawWrapRef = useRef<any>(null)
+  const [selectedValue, setSelectedValue] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
 
   const [isShowSideBar, setIsShowSideBar] = useState(true)
   const [isPaused, setIsPaused] = useState(true)
   const [speedMultiplier, setSpeedMultiplier] = useState(1)
-
   const [popup, setPopup] = useState<PopXY | null>(null);
+  const [rPopup, setRpopup] = useState<PopXY | null>(null);
+  const [isClickArea, setIsClickArea] = useState(false)
 
-  //点击生成信息框
+  //左键点击生成信息框
   const handleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     setPopup({ x: event.clientX, y: event.clientY });
-  };
+  }
+  //右键点击生成信息框
+  const rightHandleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    event.preventDefault()
+    setRpopup({ x: event.clientX, y: event.clientY });
+    // console.log(event.clientX, event.clientY)
+  }
 
+  // 影像层选取
   const imageryProviders = [
     // new Cesium.ImageryLayer.fromWorldImagery(),,
     Cesium.ImageryLayer.fromProviderAsync(Cesium.IonImageryProvider.fromAssetId(2), {}),
@@ -71,8 +90,9 @@ const CesiumMap: React.FC = () => {
       styleId: 'clzi16g9c00h501pr4mtt3owf',
       accessToken: MAPBOX_USER.token,
     }))
-  ];
+  ]
 
+  // 地图主体
   useEffect(() => {
 
     // 加载数据
@@ -98,8 +118,11 @@ const CesiumMap: React.FC = () => {
       timeline: false,
       vrButton: false,
     });
+
+
     setViewer(viewer)
     viewer.imageryLayers.add(imageryProviders[1])
+    drawWrapRef.current = []
 
 
     const currentState: CurrentLocation = {
@@ -107,18 +130,39 @@ const CesiumMap: React.FC = () => {
       province: '',
       city: ''
     }
+
+    let activeShapePoints = [] as any[]
+    let activeShape: any = null
+    let floatingPoint: any = null
+
+
     currentRef.current = currentState
     viewerInitial(viewer, topContainerRef)
 
 
-
-
-    // 添加点击事件单击事件设置
+    // 添加左键点击事件
     let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
     handler.setInputAction(function onLeftClick(click: any) {
       let pickObject = viewer.scene.pick(click.position)
       let pickedPosition = viewer.scene.pickPosition(click.position)
-
+      setRpopup(null)
+      if (drawModeRef.current == 'polygon' || drawModeRef.current == 'circle' || drawModeRef.current == 'rectangle') {
+        if (Cesium.defined(pickedPosition)) {
+          if (activeShapePoints.length == 0) {
+            floatingPoint = drawPoint(pickedPosition)
+            activeShapePoints.push(pickedPosition)
+            let dynamicPositions = new Cesium.CallbackProperty(() => {
+              if (drawModeRef.current === 'polygon') {
+                return new Cesium.PolygonHierarchy(activeShapePoints)
+              }
+              return activeShapePoints
+            }, false)
+            activeShape = drawShape(dynamicPositions)
+          }
+          activeShapePoints.push(pickedPosition)
+          drawPoint(pickedPosition)
+        }
+      }
       if (pickedPosition) {
         let cartographic = Cesium.Cartographic.fromCartesian(pickedPosition)
         let longitude = Cesium.Math.toDegrees(cartographic.longitude)
@@ -134,7 +178,10 @@ const CesiumMap: React.FC = () => {
         // setPickId('')
         if (pickObject.id) {
           // console.log('点击了对象:', pickObject.id);
-          if (pickObject.id.name == 'UAV') {
+          if (pickObject.id.name == 'specificArea') {
+            console.log('点击了对象:', pickObject.id);
+          }
+          else if (pickObject.id.name == 'UAV') {
             let dataPrimitive = getDataPrimitive(currentState.province, currentState.city)
             // console.log('点击了对象:', pickObject.id);
             setPickUavId(pickObject.id.id)
@@ -142,7 +189,7 @@ const CesiumMap: React.FC = () => {
             if (foundItem) {
               setTarget(item => ({
                 ...item,
-                id: foundItem.id,
+                id: foundItem.id.toString(),
                 // height: foundItem.height,
                 height: 2000,
                 longitude: foundItem.longitude,
@@ -151,21 +198,26 @@ const CesiumMap: React.FC = () => {
                 pitch: foundItem.pitch,
                 roll: foundItem.roll
               }))
+              // console.log(target)
             }
             else {
-              console.log(pickObject.id)
-              setTarget(item => ({
-                ...item,
-                id: pickObject.id.id,
-              }))
-              if (pickObject.id.position._value) {
-                let cartographic = Cesium.Cartographic.fromCartesian(pickObject.id.position._value)
-                setTarget(item => ({
-                  ...item,
-                  height: Cesium.Math.toDegrees(cartographic.height),
-                  longitude: Cesium.Math.toDegrees(cartographic.longitude),
-                  latitude: Cesium.Math.toDegrees(cartographic.latitude),
-                }))
+              let foundItem = viewer.entities.getById(pickObject.id.id)
+              if (foundItem) {
+                let pos = foundItem.position!.getValue(viewer.clock.currentTime)
+                if (pos) {
+                  let cartographic = Cesium.Cartographic.fromCartesian(pos)
+                  let longitude = Cesium.Math.toDegrees(cartographic.longitude)
+                  let latitude = Cesium.Math.toDegrees(cartographic.latitude)
+                  let height = cartographic.height
+                  setTarget(item => ({
+                    ...item,
+                    id: foundItem.id,
+                    height: height,
+                    longitude: longitude,
+                    latitude: latitude,
+                  }))
+                  // console.log(longitude, typeof latitude, 777)
+                }
               }
             }
           }
@@ -215,39 +267,109 @@ const CesiumMap: React.FC = () => {
         }
         else {
           setPickUavId('')
+          setSelectedOption('')
+          setIsClickArea(false)
+          setIsConfigured(false)
+          targetAreaRef.current = null
         }
       }
       else {
         setPickUavId('')
+        setSelectedOption('')
+        setIsClickArea(false)
+        setIsConfigured(false)
+        targetAreaRef.current = null
       }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
 
+    // 添加右键事件
+    handler.setInputAction((click: any) => {
+      let pickObject = viewer.scene.pick(click.position)
+      console.log('右键点击了对象:', pickObject.id.position)
+      if (drawModeRef.current) {
+        activeShapePoints.pop()
+        if (activeShapePoints.length) {
+          drawShape(activeShapePoints)
+        }
+        drawWrapRef.current.forEach((item: any) => {
+          if (item.name == 'Point') {
+            item.show = false
+          }
+        })
+        viewer.entities.remove(activeShape)
+        viewer.entities.remove(floatingPoint)
+        floatingPoint = undefined
+        activeShape = undefined
+        activeShapePoints = []
+      }
+      else if (Cesium.defined(pickObject) && pickObject.id.name == 'specificArea_Fixed') {
+        // console.log('右键点击了对象:', pickObject.id.position)
+        setIsClickArea(true)
+        targetAreaRef.current = null
+        targetAreaRef.current = {
+          id: pickObject.id.id,
+          timeSpan: '',
+          confineMethod: ''
+        }
+        // console.log('右键点击了对象:', pickObject.id)
 
-    //移动鼠标事件设置
+      }
+      else if (Cesium.defined(pickObject) && pickObject.id.name == 'specificArea_Configured') {
+        setIsClickArea(true)
+        setIsConfigured(true)
+        if (confinedAreaWrapRef.current) {
+          confinedAreaWrapRef.current.forEach(item => {
+            if (item.id == pickObject.id.id) {
+              targetAreaRef.current = null
+              targetAreaRef.current = item
+            }
+          })
+        }
+      }
+      else {
+        setIsClickArea(false)
+        setIsConfigured(false)
+        targetAreaRef.current = null
+      }
+
+
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK)
+
+
+    //添加移动鼠标事件
     const highlightColor = new Cesium.Color(1.0, 1.0, 1.0, 0.5)
     const defaultColor = Cesium.Color.fromCssColorString('#00868B').withAlpha(0.3)
     let highlightedEntity: any = null;
     // 添加高亮
     handler.setInputAction(function (movement: any) {
-      let cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
-      let pickedObject = viewer.scene.pick(movement.endPosition)
-      // console.log(pickedObject)
-      if (cartesian) {
-        if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.polygon
-          && currentState.layer != 'BOTTOM') {
-          if (highlightedEntity !== pickedObject.id) {
-            if (highlightedEntity) {
-              highlightedEntity.polygon.material = defaultColor
-            }
-            highlightedEntity = pickedObject.id
-            highlightedEntity.polygon.material = highlightColor
-          }
-        } else if (highlightedEntity) {
-          highlightedEntity.polygon.material = defaultColor
-          highlightedEntity = null
+
+      if (Cesium.defined(floatingPoint)) {
+        let newPosition = viewer.scene.pickPosition(movement.endPosition)
+        if (Cesium.defined(newPosition)) {
+          activeShapePoints.pop()
+          activeShapePoints.push(newPosition)
         }
       }
-
+      // console.log(pickedObject)
+      else {
+        let cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+        let pickedObject = viewer.scene.pick(movement.endPosition)
+        if (cartesian) {
+          if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.polygon
+            && currentState.layer != 'BOTTOM' && currentState.layer != 'REALITY') {
+            if (highlightedEntity !== pickedObject.id) {
+              if (highlightedEntity) {
+                highlightedEntity.polygon.material = defaultColor
+              }
+              highlightedEntity = pickedObject.id
+              highlightedEntity.polygon.material = highlightColor
+            }
+          } else if (highlightedEntity) {
+            highlightedEntity.polygon.material = defaultColor
+            highlightedEntity = null
+          }
+        }
+      }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
 
@@ -258,25 +380,30 @@ const CesiumMap: React.FC = () => {
       // console.log(pickObject)
       if (Cesium.defined(pickObject)) {
         if (currentState.layer == 'TOP') {
-          if (pickObject.id.properties.level._value == 'province') {
-            topContainerRef.current.forEach(item => {
-              item.show = false
-            })
-            currentState.layer = 'MEDIUM'
-            mediumContainerRef.current.splice(0, mediumContainerRef.current.length)
-            switchProvinceView(viewer, pickObject.id.name, mediumContainerRef)
+          if (pickObject.id.properties.level) {
+            if (pickObject.id.properties.level._value == 'province') {
+              topContainerRef.current.forEach(item => {
+                item.show = false
+              })
+              currentState.layer = 'MEDIUM'
+              mediumContainerRef.current.splice(0, mediumContainerRef.current.length)
+              switchProvinceView(viewer, pickObject.id.name, mediumContainerRef)
+            }
           }
         }
 
         else if (currentState.layer == 'MEDIUM') {
           if (pickObject.id.properties) {
-            if (pickObject.id.properties.level._value == 'city' || 'district') {
-              currentState.layer = 'BOTTOM'
-              setIsShowSideBar(false)
-              switchCityView(viewer, currentState.province, currentState.city, bottomContainerRef)
-              mediumContainerRef.current.forEach(item => {
-                item.show = false
-              })
+            if (pickObject.id.properties.level) {
+              if (pickObject.id.properties.level._value == 'city' || 'district') {
+                setShowBackBnt(true)
+                currentState.layer = 'BOTTOM'
+                setIsShowSideBar(false)
+                switchCityView(viewer, currentState.province, currentState.city, bottomContainerRef)
+                mediumContainerRef.current.forEach(item => {
+                  item.show = false
+                })
+              }
             }
           }
         }
@@ -291,14 +418,14 @@ const CesiumMap: React.FC = () => {
 
               switchUavView(viewer, foundItem)
               // console.log(viewer.imageryLayers.get(1)
-              setShowBackBnt(true)
-              bottomContainerRef.current.forEach(item => {
-                if (item.name != 'UAV') {
-                  item.show = false
-                }
-              })
+              // bottomContainerRef.current.forEach(item => {
+              //   if (item.name != 'UAV' && item.name != 'crediblePath'&& item.name != 'tower'&& item.name != 'signal') {
+              //     item.show = false
+              //   }
+              // })
               setPickUavId('')
               // console.log(bottomContainerRef.current)
+
             }
           }
 
@@ -307,14 +434,96 @@ const CesiumMap: React.FC = () => {
       else if (currentState.layer != 'REALITY' && currentState.layer != 'TOP') {
         currentState.layer = 'TOP'
         setIsShowSideBar(true)
+        setShowBackBnt(false)
         resetAll(viewer, topContainerRef, mediumContainerRef, bottomContainerRef)
       }
 
     }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK)
 
 
+    // 绘制点
+    const drawPoint = (position: any) => {
+      let pointGeometry = viewer.entities.add({
+        name: 'Point',
+        position: position,
+        point: {
+          color: Cesium.Color.BLUE,
+          pixelSize: 3,
+          outlineWidth: 1,
+          outlineColor: Cesium.Color.WHITE,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY
+        }
+      })
+      drawWrapRef.current.push(pointGeometry)
+      return pointGeometry
+    }
+    // 计算质心
+    const calculateCentroid = (positions: any) => {
+      let x = 0, y = 0, z = 0;
+      for (let i = 0; i < positions.length; i++) {
+        x += positions[i].x;
+        y += positions[i].y;
+        z += positions[i].z;
+      }
 
-    // console.log(cesiumContainerRef)
+      let numPositions = positions.length;
+      return new Cesium.Cartesian3(x / numPositions, y / numPositions, z / numPositions);
+    }
+    // 绘制图形
+    const drawShape = (positionData: any) => {
+      let shape
+      if (drawModeRef.current === 'polygon') {
+        let centroid = calculateCentroid(positionData)
+        shape = viewer.entities.add({
+          name: 'specificArea',
+          position: centroid,
+          polygon: {
+            hierarchy: positionData,
+            material: new Cesium.ColorMaterialProperty(Cesium.Color.RED.withAlpha(0.3)),
+            height: 500
+          }
+        })
+      }
+      else if (drawModeRef.current === 'circle') {
+        let value = typeof positionData.getValue === 'function' ? positionData.getValue(0) : positionData
+        shape = viewer.entities.add({
+          name: 'specificArea',
+          position: activeShapePoints[0],
+          ellipse: {
+            semiMinorAxis: new Cesium.CallbackProperty(() => {
+              let r = Math.sqrt(Math.pow(value[0].x - value[value.length - 1].x, 2) + Math.pow(value[0].y - value[value.length - 1].y, 2))
+              return r ? r : r + 1
+            }, false),
+            semiMajorAxis: new Cesium.CallbackProperty(() => {
+              let r = Math.sqrt(Math.pow(value[0].x - value[value.length - 1].x, 2) + Math.pow(value[0].y - value[value.length - 1].y, 2))
+              return r ? r : r + 1
+            }, false),
+            material: Cesium.Color.RED.withAlpha(0.3),
+            outline: true,
+            height: 500
+          }
+        })
+      }
+      else if (drawModeRef.current === 'rectangle') {
+        let arr = typeof positionData.getValue === 'function' ? positionData.getValue(0) : positionData
+        let centroid = calculateCentroid(positionData)
+        shape = viewer.entities.add({
+          name: 'specificArea',
+          position: centroid,
+          rectangle: {
+            coordinates: new Cesium.CallbackProperty(() => {
+              let obj = Cesium.Rectangle.fromCartesianArray(arr)
+              return obj
+            }, false),
+            material: Cesium.Color.RED.withAlpha(0.3),
+            height: 500
+          }
+        })
+      }
+      drawWrapRef.current.push(shape)
+      return shape
+    }
+
     return () => {
       viewer.destroy()
       setPickUavId('')
@@ -322,9 +531,34 @@ const CesiumMap: React.FC = () => {
       setShowBackBnt(false)
       setIsPaused(true)
       setSpeedMultiplier(1)
+      bottomContainerRef.current = []
+      mediumContainerRef.current = []
+      topContainerRef.current = []
+      drawWrapRef.current = null
+      drawModeRef.current = null
+      signalRef.current = null
+      currentRef.current = null
+      setOnDraw(false)
+      target.id = ''
+      target.height = 0
+      target.longitude = 0
+      target.latitude = 0
+      target.degree = 0
+      target.pitch = 0
+      target.roll = 0
+      setSelectedOption('')
+      setSelectedValue('')
+      setControlSignal('')
+      setSpeedMultiplier(1)
+      setIsClickArea(false)
+      setIsConfigured(false)
+      confinedAreaWrapRef.current = null
+      targetRef.current = null
+
     }
   }, [])
 
+  // 复位地图
   const rebackMap = () => {
     setShowBackBnt(false)
     if (viewer) {
@@ -343,26 +577,180 @@ const CesiumMap: React.FC = () => {
     // console.log(currentRef)
 
   }
+  // 选择控制策略
   const handleChange = (e: any) => {
-    setSelectedOption(e.target.value);
+    setSelectedOption(e.target.value)
   };
-
+  // 设置限制时间
+  const handleDateChange = (e: any) => {
+    setSelectedDate(e.target.value)
+  };
+  // 提交控制信号
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    alert(`Selected option: ${selectedOption}`);
-  };
+    setControlSignal(selectedOption)
+    signalRef.current = selectedOption
 
-  // 跳到第一个demo
-  const displayFirstDemo = () => {
-    bottomContainerRef.current.forEach(item => {
-      item.show = false
-    })
     if (viewer) {
-      differentiatedDisplay(viewer)
-    }
-  }
+      let newPositionProperty = new Cesium.SampledPositionProperty()
+      if (selectedOption === 'PersuasionBack') {
+        let targetUav = viewer.entities.getById(target.id.toString())
+        if(targetRef.current){
+          targetRef.current.push(targetUav)
+        }else{
 
-  const displaySecondDemo = () => {
+          targetRef.current = []
+          targetRef.current.push(targetUav)
+        }
+        if (targetUav) {
+          if (targetUav.position) {
+            let targetUav = viewer.entities.getById(target.id.toString())
+            if (targetUav) {
+              targetUav.label = new Cesium.LabelGraphics({
+                text: 'PersuasionBack Working',
+                font: '20px Helvetica',
+                fillColor: Cesium.Color.YELLOW,
+                outlineColor: Cesium.Color.RED,
+                outlineWidth: 20,
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                pixelOffset: new Cesium.Cartesian2(0, -40)
+              })
+              targetUav.path = new Cesium.PathGraphics({
+                resolution: 1,
+                material: new Cesium.PolylineDashMaterialProperty({
+                  color: Cesium.Color.YELLOW,
+                  dashLength: 30
+                }),
+                width: 3,
+                leadTime: 0,
+                trailTime: 3000
+              })
+              let timeStop = Cesium.JulianDate.addSeconds(viewer.clock.currentTime, 0, new Cesium.JulianDate());
+              let timeAim = Cesium.JulianDate.addSeconds(viewer.clock.currentTime, 20, new Cesium.JulianDate());
+              let timeEnd = Cesium.JulianDate.addSeconds(viewer.clock.currentTime, 10000, new Cesium.JulianDate());
+              
+              if (targetUav.position) {
+                let pos = targetUav.position.getValue(viewer.clock.currentTime)
+                if (pos) {
+                  let cartoPos = Cesium.Cartographic.fromCartesian(pos)
+                  let lo = Cesium.Math.toDegrees(cartoPos.longitude)
+                  let la = Cesium.Math.toDegrees(cartoPos.latitude)
+                  let ht = cartoPos.height
+                  let newCartoPos = Cesium.Cartesian3.fromDegrees(lo + 0.1, la + 0.1, ht)
+                  newPositionProperty.addSample(timeStop, pos)
+                  newPositionProperty.addSample(timeAim, newCartoPos)
+                  newPositionProperty.addSample(timeEnd, newCartoPos)
+                  // newPositionProperty.addSample()
+                  targetUav.position = newPositionProperty
+                  targetUav.orientation = new Cesium.VelocityOrientationProperty(newPositionProperty)
+                  setSelectedOption('')
+                  signalRef.current = null
+
+                }
+              }
+            }
+          }
+        }
+      }
+      else if (selectedOption === 'ForcedLanding') {
+        let targetUav = viewer.entities.getById(target.id.toString())
+        if (targetRef.current) {
+          targetRef.current.push(targetUav)
+        }
+        else {
+          targetRef.current = []
+          targetRef.current.push(targetUav)
+        }
+        if (targetUav) {
+          targetUav.label = new Cesium.LabelGraphics({
+            text: 'ForcedLanding Working',
+            font: '20px Helvetica',
+            fillColor: Cesium.Color.YELLOW,
+            outlineColor: Cesium.Color.RED,
+            outlineWidth: 20,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(0, -40)
+          })
+          let timeStop = Cesium.JulianDate.addSeconds(viewer.clock.currentTime, 0, new Cesium.JulianDate());
+          let timeAim = Cesium.JulianDate.addSeconds(viewer.clock.currentTime, 10, new Cesium.JulianDate());
+          let timeEnd = Cesium.JulianDate.addSeconds(viewer.clock.currentTime, 10000, new Cesium.JulianDate());
+          if (targetUav.position) {
+            let pos = targetUav.position.getValue(viewer.clock.currentTime)
+            if (pos) {
+              let cartoPos = Cesium.Cartographic.fromCartesian(pos)
+              let lo = Cesium.Math.toDegrees(cartoPos.longitude)
+              let la = Cesium.Math.toDegrees(cartoPos.latitude)
+              let newCartoPos = Cesium.Cartesian3.fromDegrees(lo, la, 0)
+              newPositionProperty.addSample(timeStop, pos)
+              newPositionProperty.addSample(timeAim, newCartoPos)
+              newPositionProperty.addSample(timeEnd, newCartoPos)
+              // newPositionProperty.addSample()
+            //  console.log('pos:',pos,'--cartoPos:',cartoPos,'--lo:',lo,'--la:',la,'--newCartoPos:',newCartoPos)
+              targetUav.position = newPositionProperty
+              setSelectedOption('')
+              signalRef.current = null
+
+            }
+          }
+        }
+      }
+      signalRef.current = null
+      setSelectedOption('')
+    }
+    setTimeout(() => { setControlSignal(''), setPickUavId('') }, 500)
+  };
+  // 提交限制区域
+  const confineAareSubmit = (e: any) => {
+    e.preventDefault()
+    if (targetAreaRef.current != null) {
+      if (selectedDate && selectedOption) {
+        let tId = targetAreaRef.current.id
+        targetAreaRef.current = null
+        targetAreaRef.current = {
+          id: tId,
+          confineMethod: selectedOption,
+          timeSpan: selectedDate,
+          subscription: subsription
+        }
+        if (viewer) {
+          let area = viewer.entities.getById(tId)
+          if (area) {
+            area.name = 'specificArea_Configured'
+            area.label = new Cesium.LabelGraphics({
+              text: 'Confined',
+              font: '40px Helvetica',
+              fillColor: Cesium.Color.WHITE,
+              outlineColor: Cesium.Color.BLACK,
+              outlineWidth: 20,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            })
+          }
+        }
+        if (confinedAreaWrapRef.current) {
+          confinedAreaWrapRef.current.push(targetAreaRef.current)
+        }
+        else {
+          confinedAreaWrapRef.current = []
+          confinedAreaWrapRef.current.push(targetAreaRef.current)
+        }
+      }
+    }
+    targetAreaRef.current = null
+    setIsClickArea(false)
+    setIsConfigured(false)
+  }
+  // 取消限制区域
+  const cancelConfineAare = () => {
+    if (targetAreaRef.current != null) {
+      let tId = targetAreaRef.current.id
+      if (confinedAreaWrapRef.current && viewer) {
+        confinedAreaWrapRef.current.filter(item => item.id != tId)
+        viewer.entities.removeById(tId)
+      }
+      targetAreaRef.current = null
+      setIsClickArea(false)
+      setIsConfigured(false)
+    }
 
   }
   // 控制动画开始暂停
@@ -381,6 +769,11 @@ const CesiumMap: React.FC = () => {
     if (viewer) {
       viewer.clock.currentTime = viewer.clock.startTime.clone();
       viewer.clock.shouldAnimate = false;
+      // if (targetRef.current) {
+      //   targetRef.current.forEach((item: any) => {
+      //     viewer.entities.remove(item)
+      //   })
+      // }
       setIsPaused(true);
     }
   };
@@ -388,7 +781,7 @@ const CesiumMap: React.FC = () => {
   const plusSpeed = () => {
     if (viewer) {
       if (viewer.clock.multiplier < 100) {
-        viewer.clock.multiplier = viewer.clock.multiplier + 10
+        viewer.clock.multiplier = viewer.clock.multiplier + 1
         setSpeedMultiplier(viewer.clock.multiplier)
       }
     }
@@ -398,7 +791,7 @@ const CesiumMap: React.FC = () => {
     if (viewer) {
       if (viewer.clock.multiplier > -100) {
 
-        viewer.clock.multiplier = viewer.clock.multiplier - 10
+        viewer.clock.multiplier = viewer.clock.multiplier - 1
         setSpeedMultiplier(viewer.clock.multiplier)
       }
     }
@@ -411,11 +804,70 @@ const CesiumMap: React.FC = () => {
     }
   }
 
+  //选择绘制模式
+  const switchDrawMode = (e: any) => {
+
+    let value = e.target.value
+    if (value) {
+      switch (value) {
+        case 'null':
+          drawModeRef.current = ''
+          break;
+        case 'polygon':
+          drawModeRef.current = 'polygon'
+          break;
+        case 'rectangle':
+          drawModeRef.current = 'rectangle'
+          break;
+        case 'circle':
+          drawModeRef.current = 'circle'
+          break;
+        default:
+          break;
+      }
+    }
+    setSelectedValue(drawModeRef.current)
+
+  }
+  // 清除绘制
+  const clearFunc = () => {
+    if (drawWrapRef.current) {
+      drawWrapRef.current.forEach((item: any) => {
+        if (viewer) {
+          if (item.name == 'specificArea') {
+            viewer.entities.removeById(item.id)
+          }
+        }
+        else {
+          if (item.name == 'specificArea') {
+            item.show = false
+          }
+        }
+      })
+    }
+    drawWrapRef.current = []
+  }
+  // 结束绘制
+  const drawEnd = () => {
+    setOnDraw(!onDraw)
+    setSelectedValue('')
+    drawModeRef.current = null
+    drawWrapRef.current.forEach((item: any) => {
+      if (item.name == 'specificArea') {
+        item.name = 'specificArea_Fixed'
+      }
+    });
+  }
+
+
 
   return (
     <div className='total_wrap'>
+      {/* 提交成功提示框 */}
+      <div className='submit_success'><SubmitSuccess message={controlSignal} targetId={pickUavId}></SubmitSuccess></div>
       <div className="container">
-        {isShowSideBar && <div className='info_wrap_left'>
+        {/* 左信息栏 */}
+        <div className={`info_wrap_left ${isShowSideBar ? '' : 'hide'}`}>
           <img className='bupt_logo' src={logo} alt="" />
           <div className="sidebar" style={{ height: '3rem' }}>
             <div className="sidebar-content">
@@ -463,8 +915,9 @@ const CesiumMap: React.FC = () => {
               当前时间: &nbsp; <CurrentTime></CurrentTime>
             </div>
           </div>
-        </div>}
-        {isShowSideBar && <div className={`info_wrap_right ${target.province ? 'show' : ''}`}>
+        </div>
+        {/* 右信息栏 */}
+        <div className={`info_wrap_right ${target.province && isShowSideBar ? 'show' : ''}`}>
           <div className="sidebar" style={{ height: '100px' }}>
             <div className="sidebar-content">
               市（区）无人机分布情况：
@@ -480,99 +933,174 @@ const CesiumMap: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>}
-        <div className="hide">
+        </div>
+        {/* 底边位置信息栏 */}
+        <div className="bottom_bar">
           <div className="coordinate">Longitude: {longitude_ALL}° &nbsp;&nbsp;&nbsp; Latitude:{latitude_ALL}°
             &nbsp;&nbsp;&nbsp;Height: {height_ALL} m &nbsp;&nbsp;cameraHeight: {cameraHeight}
           </div>
         </div>
-        {pickUavId && popup &&
-          <div
-            className='pop'
-            style={{
-              position: 'absolute',
-              top: popup.y,
-              left: popup.x,
-            }}
-          >
-            <div className='uavInfo_content'>
-              <span>Uid: {target.id}</span>
-              <span className='uavInfo_title' >
-                <span>U3 GO2453</span>
-                <img src={uavImg} alt="" />
-              </span>
-              <span>Dir: 20km-H45°{target.degree!.toFixed(1)}-P30°{target.pitch!.toFixed(1)}-R{target.roll!.toFixed(1)}</span>
-              <span>
-                <div>Hgt: {target.height!.toFixed(2)}m</div>
-                <div>Log: {target.longitude!.toFixed(2)}°</div>
-                <div>Lat: {target.latitude!.toFixed(2)}°</div>
-              </span>
-            </div>
-            <div className='uavInfo_control'>
-              <span className='uavInfo_title' style={{ fontSize: '30px' }}>控制策略</span>
-              <div>
-                <form onSubmit={handleSubmit} >
-                  <div className='uav_control_form'>
-                    <div className='uav_control_input'>
-                      <label className={selectedOption === 'PersuasionBack' ? 'checked' : ''}>
-                        <input
-                          type="radio"
-                          name="option"
-                          value="PersuasionBack"
-                          checked={selectedOption === 'PersuasionBack'}
-                          onChange={handleChange}
-                        />
-                        <span className='radio-text'>劝返</span>
-                        <span>Persuasion-Back</span>
-                      </label>
-                    </div>
-                    <div className='uav_control_input'>
-                      <label className={selectedOption === 'Forced-Landing' ? 'checked' : ''}>
-                        <input
-                          type="radio"
-                          name="option"
-                          value="ForcedLanding"
-                          checked={selectedOption === 'ForcedLanding'}
-                          onChange={handleChange}
-                        />
-                        <span className='radio-text'>迫降</span>
-                        <span >Forced-Landing</span>
-                      </label>
-                    </div>
+        {/* 详细信息框 */}
+        {popup && <div
+          className={`pop ${pickUavId ? '' : 'hide'}`}
+          style={{
+            top: popup!.y,
+            left: popup!.x,
+          }}
+        >
+          <div className='uavInfo_content'>
+            <span>Uid: {target.id}</span>
+            <span className='uavInfo_title' >
+              <span>U3 GO2453</span>
+              <img src={uavImg} alt="" />
+            </span>
+            <span>Dir: 20km-H45°{target.degree!.toFixed(1)}-P30°{target.pitch!.toFixed(1)}-R{target.roll!.toFixed(1)}</span>
+            <span>
+              <div>Hgt: {target.height!.toFixed(2)}m</div>
+              <div>Log: {target.longitude!.toFixed(2)}°</div>
+              <div>Lat: {target.latitude!.toFixed(2)}°</div>
+            </span>
+          </div>
+          <div className='uavInfo_control'>
+            <span className='uavInfo_title' style={{ fontSize: '30px' }}>控制策略</span>
+            <div>
+              <form onSubmit={handleSubmit} >
+                <div className='uav_control_form'>
+                  <div className='uav_control_input'>
+                    <label className={selectedOption === 'PersuasionBack' ? 'checked' : ''}>
+                      <input
+                        type="radio"
+                        name="option"
+                        value="PersuasionBack"
+                        checked={selectedOption === 'PersuasionBack'}
+                        onChange={handleChange}
+                      />
+                      <span className='radio-text'>劝返</span>
+                      <span>Persuasion-Back</span>
+                    </label>
                   </div>
-                  <div className='button_wrap'>
-                    <button className='uav_control_button' type="submit">Submit</button>
-                    <button className='uav_control_button' onClick={() => { setPickUavId('') }}>Cancel</button>
+                  <div className='uav_control_input'>
+                    <label className={selectedOption === 'Forced-Landing' ? 'checked' : ''}>
+                      <input
+                        type="radio"
+                        name="option"
+                        value="ForcedLanding"
+                        checked={selectedOption === 'ForcedLanding'}
+                        onChange={handleChange}
+                      />
+                      <span className='radio-text'>迫降</span>
+                      <span >Forced-Landing</span>
+                    </label>
                   </div>
-                </form>
+                </div>
+                <div className='button_wrap'>
+                  <button className='uav_control_button' type="submit">Submit</button>
+                  <button className='uav_control_button' type="button" onClick={() => { setPickUavId(''); setSelectedOption('') }}>Cancel</button>
+                </div>
+              </form>
 
-              </div>
             </div>
           </div>
-        }
-        <div className={`home_button_wrap ${showBackBnt ? '' : 'close'}`}>
+        </div>}
+        {/* 设置限制区域信息 */}
+        {rPopup && <div
+          className={`pop ${isClickArea ? '' : 'hide'}`}
+          style={{
+            top: rPopup!.y,
+            left: rPopup!.x,
+          }}
+        >
+          <div className='uavInfo_content'>
+            <div className='confine_title'>
+              <span> CityArea Restricted</span>
+              {isConfigured && <button className='uav_control_button' style={{ padding: '1px,3px,1px,3xp' }} onClick={cancelConfineAare}>Unfreeze</button>}
+            </div>
+            <span className='uavInfo_title' >
+              {targetAreaRef.current && <span>{targetAreaRef.current.timeSpan ? targetAreaRef.current.timeSpan : 'Not Configure'}</span>}
+              {!targetAreaRef.current && <span>Not Configure</span>}
+              <img src={confineImg} alt="" />
+            </span>
+            <span>Subscription:</span>
+            <span style={{ width: '400px' }}>
+              {targetAreaRef.current && <div>{targetAreaRef.current.subscription ? targetAreaRef.current.subscription : ''}</div>}
+            </span>
+          </div>
+          {!isConfigured && <div className='uavInfo_control'>
+            <span className='uavInfo_title' style={{ fontSize: '30px' }}>限制区控制策略</span>
+            <div>
+              <form onSubmit={confineAareSubmit} >
+                <div className='confine_wrap'>
+                  <div><span className='confine_title'>请输入限飞有效期</span></div>
+                  <div><input type="date" className='input_time' value={selectedDate} onChange={handleDateChange} /></div>
+                </div>
+                <div className='uav_control_form'>
+                  <div className='uav_control_input'>
+                    <label className={selectedOption === 'PersuasionBack' ? 'checked' : ''}>
+                      <input
+                        type="radio"
+                        name="option"
+                        value="PersuasionBack"
+                        checked={selectedOption === 'PersuasionBack'}
+                        onChange={handleChange}
+                      />
+                      <span className='radio-text'>劝返</span>
+                      <span>Persuasion-Back</span>
+                    </label>
+                  </div>
+                  <div className='uav_control_input'>
+                    <label className={selectedOption === 'Forced-Landing' ? 'checked' : ''}>
+                      <input
+                        type="radio"
+                        name="option"
+                        value="ForcedLanding"
+                        checked={selectedOption === 'ForcedLanding'}
+                        onChange={handleChange}
+                      />
+                      <span className='radio-text'>迫降</span>
+                      <span >Forced-Landing</span>
+                    </label>
+                  </div>
+                </div>
+                <div className='button_wrap'>
+                  <button className='uav_control_button' type="submit">Submit</button>
+                  <button className='uav_control_button' type="button" onClick={() => { setPickUavId(''); setSelectedOption(''); targetAreaRef.current = null; setIsClickArea(false) }}>Cancel</button>
+                </div>
+              </form>
 
-          <button className='home_button' onClick={switchLayer}>Switch</button>
+            </div>
+          </div>}
+        </div>}
+        {/* 动画播放按钮 */}
+        <div className={`home_button_wrap ${showBackBnt ? '' : 'close'}`}>
           <button className='home_button' onClick={() => { rebackMap() }}>返回/BACK</button>
-          <button className='home_button' onClick={() => { displayFirstDemo() }}>Demo演示 01</button>
-          <button className='home_button' onClick={() => { displaySecondDemo() }}>Demo演示 02</button>
-          <button className='home_button' onClick={handleStartPause}>{isPaused ? 'Start' : 'Pause'}</button>
-          <button className='home_button' onClick={handleReset}>Reset</button>
-          <button className='home_button' onClick={plusSpeed}>Boost</button>
+          <button className='home_button' onClick={switchLayer}>切换影像/Switch</button>
+          <button className='home_button' onClick={handleStartPause}>{isPaused ? '开始/Start' : '暂停/Pause'}</button>
+          <button className='home_button' onClick={handleReset}>重置动画/Reset</button>
+          <button className='home_button' onClick={plusSpeed}>加速/Boost</button>
           <span style={{ color: 'white', fontSize: '30px' }}>{speedMultiplier}</span>
-          <button className='home_button' onClick={slowSpeed}>Slow</button>
+          <button className='home_button' onClick={slowSpeed}>减速/Slow</button>
+          {/* 绘画按钮 */}
+          <button className='home_button' onClick={drawEnd}>{`${onDraw ? '点击开始/Draw' : '点击保存/Drawing'}`}</button>
+          <button className='home_button' onClick={clearFunc}>清除/Clear</button>
+          <div className={`drawer_wrap ${onDraw ? '' : 'show'}`}>
+            <div className='select_container'>
+              <select className="drawmode_select" id="dropdown" value={selectedValue} onChange={switchDrawMode}>
+                <option value="null">选择一个模式</option>
+                <option value="polygon">绘制多边形</option>
+                <option value="rectangle">绘制矩形</option>
+                <option value="circle">绘制圆形</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div className={`home_button_wrap ${!showBackBnt ? '' : 'close'}`} style={{marginLeft:'0'}}>
-          <button className='home_button' onClick={() => { setOnDraw(!onDraw) }}>{`${onDraw ? 'Draw' : 'Drawing'}`}</button>
-        </div>
-        {!onDraw && <div className='rectangle_drawer'><RectangleDrawer ></RectangleDrawer></div>}
-        <div className="cesiumContainer" ref={cesiumContainerRef} onClick={handleClick}>
+
+        {/* 地图盒子 */}
+        <div className="cesiumContainer" ref={cesiumContainerRef} onClick={handleClick} onContextMenu={rightHandleClick}>
         </div>
       </div>
     </div>
 
   )
 }
-
 export default CesiumMap;
 

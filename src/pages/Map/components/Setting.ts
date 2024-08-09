@@ -17,5 +17,7 @@ export const MAPBOX_USER = {
     username:'cabinbody',
     token:MAPBOX_TOKEN
 }
+
+export const UAV_MODULE = '/public/UAV.glb'
 // const targetLongitude = 108.9109251
 // const targetLatitude = 30.3731565

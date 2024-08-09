@@ -8,7 +8,7 @@ const switchCityView = (viewer: Cesium.Viewer, province: string, city: string, b
     Cesium.GeoJsonDataSource.load(`../../../../public/Province/${province}.json`, {
         fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.1),
         stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
-        strokeWidth: 2,
+        strokeWidth: 10,
     }).then((dataSource) => {
         // viewer.dataSources.add(dataSource)
 

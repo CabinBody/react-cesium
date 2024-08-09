@@ -3,8 +3,6 @@ import 'cesium/Widgets/widgets.css'
 import { DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT } from './Setting'
 import loadResources from "./loadResources";
 import addProvince from "./addProvince";
-import { MAPBOX_USER } from "./Setting";
-
 
 const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
     
@@ -49,8 +47,8 @@ const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
         },
         duration: 1
     });
-
-
+    // 开启深度检测
+    viewer.scene.globe.depthTestAgainstTerrain = false
     // 添加第三方图层
     const mainMap = new Cesium.GeoJsonDataSource('mainMap')
     mainMap.load("../../../../public/china.json", {
@@ -85,6 +83,16 @@ const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
     viewer.scene.skyBox.show = false
     viewer.scene.moon.show = false
     viewer.scene.sun.show = true
+
+
+    // 设置动画时长
+    viewer.clock.startTime = Cesium.JulianDate.fromDate(new Date());
+    viewer.clock.stopTime = Cesium.JulianDate.addSeconds(viewer.clock.startTime, 1000, new Cesium.JulianDate());;
+    viewer.clock.currentTime = viewer.clock.startTime.clone();
+    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+    viewer.clock.clockStep = Cesium.ClockStep.SYSTEM_CLOCK;
+    viewer.clock.multiplier = 1;
+    viewer.clock.shouldAnimate = false
 
     const data = loadResources()
 

@@ -7,7 +7,7 @@ import provinceList from '../../../../public/china.json'
 
 
 // 根据Id找到实体原始数据
-const findItemById = (items: Point[], id: number): Point | undefined => {
+const findItemById = (items: Point[], id: string): Point | undefined => {
     return items.find(item => item.id === id);
 };
 

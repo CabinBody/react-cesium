@@ -5,7 +5,7 @@ import { UAV_MODULE } from './Setting'
 
 const alarmType = ['Unauthorized', 'Faulty', 'Credible']
 
-const addUavEntity = (
+const addSigleUav = (
     viewer: Cesium.Viewer,
     bottomContainerRef: any,
     province: string,
@@ -20,7 +20,6 @@ const addUavEntity = (
     }
 
     if (dataPrimitive.cartesianPointList) {
-        let towerCount = 0
         for (let index = 0; index < dataPrimitive.cartesianPointList.length && index < 50; index++) {
             let position = dataPrimitive.cartesianPointList[index]
             if (dataPrimitive.hprList) {
@@ -94,6 +93,7 @@ const addUavEntity = (
 
                 // 添加无人机实体
                 let UAVRadius = 1000
+                let hpr = dataPrimitive.hprList[index]
                 let uav = viewer.entities.add({
                     id: dataPrimitive.origin[index].id,
                     name: 'UAV',
@@ -105,14 +105,32 @@ const addUavEntity = (
                     path: {
                         resolution: 1,
                         material: new Cesium.PolylineDashMaterialProperty({
-                            color: Cesium.Color.RED.withAlpha(0.5),
+                            color: new Cesium.CallbackProperty(() => {
+                                if (index % 3 == 0) {
+                                    return Cesium.Color.RED
+                                }
+                                if (index % 3 == 1) {
+
+                                    if (viewer.clock.currentTime.secondsOfDay - viewer.clock.startTime.secondsOfDay < 20) {
+                                        return Cesium.Color.GREEN;
+                                    } else if (viewer.clock.currentTime.secondsOfDay - viewer.clock.startTime.secondsOfDay < 40) {
+                                        return Cesium.Color.BLUE;
+                                    } else {
+                                        return Cesium.Color.BLUE;
+                                    }
+
+                                }
+                                if (index % 3 == 2) {
+                                    return Cesium.Color.GREEN
+                                }
+                            }, false),
                             dashLength: 30
                         }),
                         width: 3,
                         leadTime: 0, // Show the path ahead of the entity
                         trailTime: 3000 // Show the path behind the entity
                     },
-                    orientation: new Cesium.VelocityOrientationProperty(positionProperty),
+                    orientation: Cesium.Transforms.headingPitchRollQuaternion(position, hpr),
                     label: {
                         text: new Cesium.CallbackProperty(() => {
                             if (index % 3 == 1) {
@@ -150,70 +168,22 @@ const addUavEntity = (
                         verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                         pixelOffset: new Cesium.Cartesian2(0, -40)
                     },
-                    // ellipse: new Cesium.EllipseGraphics({
-                    //     semiMajorAxis: UAVRadius,
-                    //     semiMinorAxis: UAVRadius,
-                    //     material: Cesium.Color.ORANGE.withAlpha(0.1),
-                    //     height: 2000
-                    // })
+                    ellipse: new Cesium.EllipseGraphics({
+                        semiMajorAxis: UAVRadius,
+                        semiMinorAxis: UAVRadius,
+                        material: Cesium.Color.ORANGE.withAlpha(0.5),
+                        height:2000
+                    })
                 });
                 bottomContainerRef.current.push(uav)
 
-
-                // 添加信号塔  最大数量为10
-                if (towerCount < 10) {
-                    let tower = viewer.entities.add({
-                        name: 'tower',
-                        model: {
-                            uri: '../../../../public/tower.glb',
-                            minimumPixelSize: 200,
-                            scale: 1.0, // 调整模型大小
-                        },
-                        position: Cesium.Cartesian3.fromDegrees(lo + 0.04, la - 0.04, 100),
-                    })
-                    bottomContainerRef.current.push(tower)
-                }
             }
         }
 
-        // 添加信号塔和无人机之间信号
-        let signalCount = 0
-        let towerPosition = [] as any[]
-        bottomContainerRef.current.forEach((item: any) => {
-            if (item.name == 'tower') {
-                towerPosition.push(item.position.getValue(viewer.clock.currentTime))
-            }
-        })
-        bottomContainerRef.current.forEach((item: any) => {
-            if (signalCount < 20) {
-                if (item.name == 'UAV') {
-                    towerPosition.forEach((towerPos: any) => {
-                        let signal = viewer.entities.add({
-                            name: 'signal',
-                            polyline: new Cesium.PolylineGraphics({
-                                positions: new Cesium.CallbackProperty(() => {
-                                    return [
-                                        towerPos,
-                                        item.position.getValue(viewer.clock.currentTime)
-                                    ]
-                                }, false),
-                                width: 2,
-                                material: new Cesium.PolylineDashMaterialProperty({
-                                    color: Cesium.Color.YELLOW.withAlpha(0.3),
-                                    dashLength: 20
-                                }),
-                                
-                            }),
-                        })
-                        bottomContainerRef.current.push(signal)
-                        signalCount += 1
-                    })
-                }
-            }
 
-        })
 
     }
+
 }
 
-export default addUavEntity
+export default addSigleUav

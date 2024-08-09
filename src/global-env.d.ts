@@ -11,7 +11,7 @@ export type DataPoint = {
 export type Point = {
     province: string
     city: string
-    id: number
+    id: string
     name?: string
     longitude?: number
     latitude?: number
@@ -43,6 +43,13 @@ export interface Mouse {
     setTarget: React.Dispatch<React.SetStateAction<Point>>
     dataPrimitive: DataFrame | any
     uavCountList: DataPoint[]
+}
+
+export interface ConfinedArea {
+    id: string
+    timeSpan : string
+    confineMethod:string
+    subscription?:string
 }
 
 // 全局变量声明
