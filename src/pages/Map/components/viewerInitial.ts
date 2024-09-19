@@ -87,7 +87,7 @@ const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
 
     // 设置动画时长
     viewer.clock.startTime = Cesium.JulianDate.fromDate(new Date());
-    viewer.clock.stopTime = Cesium.JulianDate.addSeconds(viewer.clock.startTime, 1000, new Cesium.JulianDate());;
+    viewer.clock.stopTime = Cesium.JulianDate.addSeconds(viewer.clock.startTime, 40, new Cesium.JulianDate());;
     viewer.clock.currentTime = viewer.clock.startTime.clone();
     viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
     viewer.clock.clockStep = Cesium.ClockStep.SYSTEM_CLOCK;

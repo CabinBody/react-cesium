@@ -39,8 +39,11 @@ function getDataPrimitive(province: string, city: string) {
 
     let targetP: any = data.find((item: any) => item.province == province)
 
-    const pointList: any[] = targetP.city.find((item: any) => item.city_name == city).data_point
-
+    let probePoint:any = targetP.city.find((item: any) => item.city_name == city)
+    let pointList: any[] = []
+    if (probePoint) {
+        pointList = probePoint.data_point
+    }
     const dataPrimitive: DataFrame = {
         origin: pointList,
         hprList: [],
