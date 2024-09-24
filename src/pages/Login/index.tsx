@@ -1,5 +1,4 @@
 import { Card, Form, Input, Button, message } from "antd";
-import logo from '../../asset/logo.png'
 import './index.less'
 import React from 'react';
 // import { useDispatch } from "react-redux";
@@ -25,7 +24,7 @@ const Login: React.FC = () => {
     return (
         <div className="login">
             <Card className="login-container">
-                <img className="login-logo" src={logo} alt="" />
+                {/* <img className="login-logo" src={logo} alt="" /> */}
                 <Form
                     validateTrigger="onBlur"
                     onFinish={onFinish}

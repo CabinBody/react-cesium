@@ -1,8 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Login from "../pages/Login";
 import Map from "../pages/Map";
-import PopFrame from "../components/PopFrame";
-
+import Navigator from "../pages/Map/components/Navigator";
 
 const Router = createBrowserRouter([
     {
@@ -15,7 +14,7 @@ const Router = createBrowserRouter([
     },
     {   
         path:'/test',
-        element:<PopFrame ></PopFrame>
+        element:<Navigator></Navigator>
     },
     {
         path:'/*',

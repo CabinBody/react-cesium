@@ -1,5 +1,5 @@
 import ReactECharts from 'echarts-for-react';
-import virtualData from '../../../../public/virtual_UAV_DataPoint.json'
+import virtualData from '../../../../../public/virtual_UAV_DataPoint.json'
 
 
 type ChartPoint = {
@@ -20,7 +20,6 @@ chartData.sort((b, a) => b.value - a.value)
 
 const ydata:string[] = chartData.map((item: any) => item.name)
 const xdata:number[]= chartData.map((item: any) => item.value)
-
 
 
 const BarChart = () => {
