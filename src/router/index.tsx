@@ -1,8 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Login from "../pages/Login";
 import Map from "../pages/Map";
-import Navigator from "../pages/Map/components/Navigator";
-
+import Dashboard from "../pages/Map/components/Dashboard";
 const Router = createBrowserRouter([
     {
         index:true,
@@ -14,7 +13,8 @@ const Router = createBrowserRouter([
     },
     {   
         path:'/test',
-        element:<Navigator></Navigator>
+        element:<div style={{width:'auto',height:'100vh',backgroundColor:' #00465e',backgroundImage:'linear-gradient(160deg, #00465e 0%, #1a1a41 100%)'
+            }}></div>
     },
     {
         path:'/*',

@@ -3,9 +3,10 @@ import 'cesium/Widgets/widgets.css'
 import { DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT } from './Setting'
 import loadResources from "./loadResources";
 import addProvince from "./addProvince";
+import backimg from '../../../asset/2/tycho2t3_80_mx.jpg'
 
 const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
-    
+
     // let building = new Cesium.MapboxStyleImageryProvider({
     //     username: MAPBOX_USER.username,
     //     styleId: 'clzjerkvb00kf01qyazpp8787',
@@ -49,6 +50,7 @@ const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
     });
     // 开启深度检测
     viewer.scene.globe.depthTestAgainstTerrain = false
+
     // 添加第三方图层
     const mainMap = new Cesium.GeoJsonDataSource('mainMap')
     mainMap.load("../../../../public/china.json", {
@@ -79,10 +81,11 @@ const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
     // 设置地球是否显示
     viewer.scene.globe.show = false
     viewer.scene.skyAtmosphere.show = false
-    viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a1f44').withAlpha(0.5)
+    viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#152734').withAlpha(1)
     viewer.scene.skyBox.show = false
+    
     viewer.scene.moon.show = false
-    viewer.scene.sun.show = true
+    viewer.scene.sun.show = false
 
 
     // 设置动画时长

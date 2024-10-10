@@ -24,7 +24,7 @@ function CurrentTime() {
     const hours = String(time.getHours()).padStart(2, '0')
     const minutes = String(time.getMinutes()).padStart(2, '0')
     const seconds = String(time.getSeconds()).padStart(2, '0')
-    const dateString = `${year}/${month}/${day} | 年月日`
+    const dateString = `${year}/${month}/${day}` + ' | 年月日'
     const timeString = `${hours}:${minutes}:${seconds}`
 
     return (

@@ -5,7 +5,7 @@ import 'cesium/Widgets/widgets.css'
 import { DataPoint, Point, PopXY, ConfinedArea } from '../../global-env';
 import viewerInitial from './MapMethods/viewerInitial';
 import loadResources from './MapMethods/loadResources';
-import { CESIUMTOKEN, MAPBOX_USER } from './MapMethods/Setting';
+import { CESIUMTOKEN, MAPBOX_USER, TIDITU_TOKEN } from './MapMethods/Setting';
 import switchProvinceView from './MapMethods/switchProvinceView';
 import resetAll from './MapMethods/resetAll';
 import switchCityView from './MapMethods/switchCityView';
@@ -15,6 +15,11 @@ import confineImg from '../../asset/confine.png'
 import switchUavView from './MapMethods/switchUavView';
 import SubmitSuccess from './MapMethods/SubmitSuccess';
 import Navigator from './components/Navigator';
+import DistributionList from './components/DistributionList';
+import VideoMonitor from './components/VideoMonitor';
+import ManagementPieChart from './components/ManagementPieChart';
+import MissionFinishedChart from './components/MissionFinishedChart';
+import Dashboard from './components/Dashboard';
 
 
 
@@ -79,17 +84,6 @@ const CesiumMap: React.FC = () => {
     // console.log(event.clientX, event.clientY)
   }
 
-  // 影像层选取
-  const imageryProviders = [
-    // new Cesium.ImageryLayer.fromWorldImagery(),,
-    Cesium.ImageryLayer.fromProviderAsync(Cesium.IonImageryProvider.fromAssetId(2), {}),
-    new Cesium.ImageryLayer(new Cesium.MapboxStyleImageryProvider({
-      username: MAPBOX_USER.username,
-      styleId: 'clzi16g9c00h501pr4mtt3owf',
-      accessToken: MAPBOX_USER.token,
-    }))
-  ]
-
   // 地图主体
   useEffect(() => {
 
@@ -101,9 +95,20 @@ const CesiumMap: React.FC = () => {
 
     Cesium.Ion.defaultAccessToken = CESIUMTOKEN
 
+    // 影像层选取
+    const imageryProviders = [
+      new Cesium.ImageryLayer(new Cesium.MapboxStyleImageryProvider({
+        username: MAPBOX_USER.username,
+        styleId: 'clzi16g9c00h501pr4mtt3owf',
+        accessToken: MAPBOX_USER.token,
+      })),
+      // new Cesium.ImageryLayer.fromWorldImagery(),,
+      Cesium.ImageryLayer.fromProviderAsync(Cesium.IonImageryProvider.fromAssetId(2), {})
+    ]
+
     // 初始化Cesium Viewer
     const viewer = new Cesium.Viewer(cesiumContainerRef.current, {
-      baseLayer: imageryProviders[0],
+      baseLayer: imageryProviders[1],
       // 禁用infoBox
       infoBox: false,
       geocoder: false,
@@ -119,7 +124,8 @@ const CesiumMap: React.FC = () => {
 
 
     setViewer(viewer)
-    viewer.imageryLayers.add(imageryProviders[1])
+
+    viewer.imageryLayers.add(imageryProviders[0])
     drawWrapRef.current = []
 
 
@@ -136,6 +142,7 @@ const CesiumMap: React.FC = () => {
 
     currentRef.current = currentState
     viewerInitial(viewer, topContainerRef)
+
 
 
     // 添加左键点击事件
@@ -965,16 +972,27 @@ const CesiumMap: React.FC = () => {
 
 
   return (
-    <div className='total_wrap'>
+    <div>
+
       {/* 提交成功提示框 */}
       <div className='submit_success'><SubmitSuccess message={controlSignal} targetId={pickUavId}></SubmitSuccess></div>
-      <div className="container_map">
+      <div className='map_content_container'>
         {/* 导航栏 */}
-        <Navigator></Navigator>
-        {/* 底边位置信息栏 */}
-        <div className="bottom_bar">
-          <div className="coordinate">Longitude: {longitude_ALL}° &nbsp;&nbsp;&nbsp; Latitude:{latitude_ALL}°
-            &nbsp;&nbsp;&nbsp;Height: {height_ALL} m &nbsp;&nbsp;cameraHeight: {cameraHeight}
+        <div className='map_nav'>
+          <Navigator></Navigator>
+        </div>
+
+        <div className='map_data_show'>
+          {/* 左侧边信息栏 */}
+          <div className={`left_container`}>
+            <DistributionList ></DistributionList>
+            <MissionFinishedChart></MissionFinishedChart>
+          </div>
+          {/* 右侧边信息栏 */}
+          <div className={`right_container ${showBackBnt ? 'show' : ''}`}>
+            <VideoMonitor></VideoMonitor>
+            <ManagementPieChart></ManagementPieChart>
+            <Dashboard></Dashboard>
           </div>
         </div>
         {/* 详细信息框 */}
@@ -1054,7 +1072,7 @@ const CesiumMap: React.FC = () => {
             </div>
           </div>}
         </div>}
-        {/* 动画播放按钮 */}
+        {/* 动画播放按钮
         <div className={`home_button_wrap ${showBackBnt ? '' : 'close'}`}>
           <button className='home_button' onClick={() => { rebackMap() }}>返回/BACK</button>
           <button className='home_button' onClick={switchLayer}>切换影像/Switch</button>
@@ -1063,7 +1081,7 @@ const CesiumMap: React.FC = () => {
           <button className='home_button' onClick={plusSpeed}>加速/Boost</button>
           <span style={{ color: 'white', fontSize: '30px' }}>{speedMultiplier}</span>
           <button className='home_button' onClick={slowSpeed}>减速/Slow</button>
-          {/* 绘画按钮 */}
+          绘画按钮
           <button className='home_button' onClick={drawEnd}>{`${onDraw ? '点击开始/Draw' : '点击保存/Drawing'}`}</button>
           <button className='home_button' onClick={clearFunc}>清除/Clear</button>
           <div className={`drawer_wrap ${onDraw ? '' : 'show'}`}>
@@ -1076,12 +1094,20 @@ const CesiumMap: React.FC = () => {
               </select>
             </div>
           </div>
+        </div> */}
+        {/* 底边位置信息栏 */}
+        <div className="bottom_bar">
+          <div className="coordinate">Longitude: {longitude_ALL}° &nbsp;&nbsp;&nbsp; Latitude:{latitude_ALL}°
+            &nbsp;&nbsp;&nbsp;Height: {height_ALL} m &nbsp;&nbsp;cameraHeight: {cameraHeight}
+          </div>
         </div>
 
-        {/* 地图盒子 */}
-        <div className="cesiumContainer" ref={cesiumContainerRef} onClick={handleClick} onContextMenu={rightHandleClick}>
-        </div>
       </div>
+
+      {/* 地图盒子 */}
+      <div className="cesiumContainer" id='cesium_map' ref={cesiumContainerRef} onClick={handleClick} onContextMenu={rightHandleClick}>
+      </div>
+      <div className='map_overolay'></div>
     </div>
 
   )

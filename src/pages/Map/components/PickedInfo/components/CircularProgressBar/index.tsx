@@ -23,7 +23,7 @@ const CircularProgressBar: React.FC<CircularProgressBarProps> = ({ percentage })
                 <filter id="shadow" x="-10%" y="-10%" width="150%" height="150%">
                     <feGaussianBlur in="SourceAlpha" stdDeviation="0" />
                     <feOffset dx="1" dy="1" result="offsetblur" />
-                    <feFlood flood-color="rgba(0,0,0,0.2)" />
+                    {/* <feFlood flood-color="rgba(0,0,0,0.2)" /> */}
                     <feComposite in2="offsetblur" operator="in" />
                     <feMerge>
                         <feMergeNode />

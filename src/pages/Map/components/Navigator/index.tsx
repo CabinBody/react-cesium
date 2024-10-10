@@ -13,8 +13,8 @@ const Navigator: React.FC = () => {
 
 
     return (
-        <div className='container'>
-            <div className='title'>
+        <div className='container_nav'>
+            <div className='nav_title'>
                 <div className='title_main'>
                     <div className='title_text'>泛在低空数智平台</div>
                     <div className='title_box'>Beta</div>
@@ -33,7 +33,7 @@ const Navigator: React.FC = () => {
                     </div>
                 ))}
             </div>
-            <div className='more_info'>
+            <div className='nav_more_info'>
                 <div className='whether_bar'>
                     <div className='whether_img'></div>
                     <div className='whether_info'>

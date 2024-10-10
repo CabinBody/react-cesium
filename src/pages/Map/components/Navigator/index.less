@@ -1,90 +1,92 @@
-.container {
+.container_nav {
     display: flex;
-    padding: 20px;
+    padding: 1vw;
     // background: linear-gradient(rgba(4, 40, 42, 0.7), transparent);
     color: white;
     border: none;
+    user-select: none; 
 
-    .title {
+    .nav_title {
         display: flex;
         flex-direction: column;
 
         .title_main {
             display: flex;
-            font-size: 30px;
+            font-size: 1.3vw;
 
             .title_text {
-                text-shadow: 0 0 5px rgba(255, 225, 225, 0.5),
-                    0 0 10px rgba(255, 225, 225, 0.4);
+                text-shadow: 0 0 0.5vw rgba(255, 225, 225, 0.5),
+                    0 0 1.5vw rgba(255, 225, 225, 0.4);
             }
 
             .title_box {
                 display: flex;
-                height: 30px;
-                font-size: 15px;
-                letter-spacing: 1px;
-                margin-left: 10px;
-                margin-top: 5px;
-                padding: 0px 10px 0 10px;
-                border: 1px solid rgb(168, 168, 168);
-                border-radius: 5px;
-                box-shadow: 0 0 5px rgba(255, 225, 225, 0.3);
-                text-shadow: 0 0 5px rgba(255, 225, 225, 0.3),
-                    0 0 10px rgba(255, 225, 225, 0.3);
+                height: 2.9vh;
+                font-size: 0.6vw;
+                letter-spacing: 0.1vw;
+                margin-left: 0.6vw;
+                margin-top: 0.5vh;
+                padding: 0 1vh 0 1vh;
+                border: 0.05vw solid rgb(168, 168, 168);
+                border-radius: 0.2vw;
+                box-shadow: 0 0 0.5vw rgba(255, 225, 225, 0.3);
+                text-shadow: 0 0 0.5vw rgba(255, 225, 225, 0.5),
+                    0 0 1.5vw rgba(255, 225, 225, 0.4);
                 align-items: center;
             }
         }
 
         .title_sub {
             color: rgb(163, 163, 163);
-            font-size: 15px;
+            font-size: 0.6vw;
             opacity: 0.6;
-            text-shadow: 0 0 5px rgba(255, 225, 225, 0.1),
-                0 0 10px rgba(255, 225, 225, 0.1);
+            text-shadow: 0 0 0.5vw rgba(255, 225, 225, 0.5),
+            0 0 1.5vw rgba(255, 225, 225, 0.4);
         }
     }
 
     .nav_switch{
         display: flex;
         align-items: center;
-        padding-left: 100px;
+        padding-left: 3vw;
 
         .nav_title{
             display: flex;
             justify-content: center;
-            width: 120px;
-            font-size: 18px;
+            align-items: center;
+            width: 5.5vw;
+            font-size: 0.7vw;
             color: rgb(163, 163, 163);
-            margin-left: 60px;
+            margin-left: 2vw;
             cursor: pointer;
 
         }
 
         .nav_title:hover{
-            font-size: 20px;
+            font-size: 0.8vw;
             color: white;
             transition: font-size 0.3s ease, width 0.3 ease;
 
         }
 
         .nav_title.active{
-            font-size: 22px;
+            font-size: 0.9vw;
             color: white;
-            text-shadow: 0 0 5px rgba(255, 225, 225, 0.5),
-                0 0 10px rgba(255, 225, 225, 0.5);
+            text-shadow: 0 0 0.5vw rgba(255, 225, 225, 0.5),
+            0 0 1.5vw rgba(255, 225, 225, 0.4);
         }
     }
 
-    .more_info{
+    .nav_more_info{
         display: flex;
         position: absolute;
-        right: 20px;
+        right: 1vw;
 
         .whether_bar{
             display: flex;
 
             .whether_img{
-                width: 70px;
+                width: 3vw;
                 height: auto;
                 background-image: url('../../../../asset/small-rain.png');
                 background-size: contain;
@@ -94,21 +96,24 @@
 
             .whether_info{
                 display: flex;
-                margin-left: 20px;
+                margin: 0 0.6vw 0 0.6vw;
                 flex-direction: column;
                 justify-content: center;
 
                 .temperature{
                     display: flex;
-                    border-bottom: 1px solid rgba(255, 255, 255,0.8);
+                    border-bottom: 0.2vh solid rgba(255, 255, 255,0.8);
                     .temperature_number{
-                        font-size: 30px;
+                        font-size: 1.8vw;
+                    }
+                    .temperature_sign{
+                        font-size: 0.6vw;
                     }
                 }
 
                 .pm_number{
                     text-align: center;
-                    font-size: 14px;
+                    font-size: 0.8vw;
                     color: rgb(115, 115, 115);
                 }
             }
