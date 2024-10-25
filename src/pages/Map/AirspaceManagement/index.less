@@ -1,0 +1,174 @@
+.airspace_container {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    bottom: 80px;
+    left: 7%;
+    animation: upFromBottom 1s ease-out;
+
+
+
+    .airspace_title_bar {
+        width: 34vw;
+        // height: 5vh;
+        display: flex;
+        bottom: 0;
+        // background-color: #067d9837;
+        background-image: linear-gradient(90deg, #067d986d 0%, #027b7700 80%);
+        margin-bottom: 15px;
+        justify-content: space-around;
+
+        .airspace_title_text {
+            // background-color: #c2c2c2;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 80px;
+        }
+
+        .airspace_title_text :first-child {
+            font-size: 30px;
+        }
+
+        .airspace_title_type {
+            // background-color: #c2c2c2;
+            display: flex;
+            align-items: center;
+            // height: 70px;
+
+            .airspace_titlt_type_info {
+                color: white;
+                display: flex;
+                margin-left: 20px;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .airspace_titlt_type_info :first-child {
+                color: #c95520;
+                font-size: 30px;
+                font-weight: bold;
+            }
+        }
+
+        .airspace_search {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            right: 0;
+
+            .airspace_search_input {
+                margin-left: 10px;
+                background-color: transparent;
+                /* 设置背景为透明 */
+                border: 1px solid #ccc;
+                /* 设置边框颜色和粗细 */
+                border-radius: 5px;
+                /* 设置圆角，值越大圆角越大 */
+                padding: 8px;
+                /* 增加输入框的内边距 */
+                outline: none;
+                /* 移除默认的点击时的外边框 */
+                color: #ffffff;
+            }
+
+            .airspace_search_input:focus {
+                border-color: #66afe9;
+                /* 聚焦时边框颜色改变 */
+                box-shadow: 0 0 5px rgba(102, 175, 233, 0.6);
+                /* 聚焦时阴影效果 */
+            }
+        }
+    }
+
+    .airspace_content_list {
+        white-space: nowrap;
+        width: 85vw;
+        overflow-x: scroll;
+        overflow-y: hidden;
+        padding-bottom: 10px;
+
+    }
+
+    .airspace_content_item {
+        display: inline-flex;
+        margin-right: 15px;
+        background-color: #067d9837;
+        background-image: linear-gradient(180deg, #067d986b 0%, #027b7775 100%);
+        width: 250px;
+        height: 80px;
+        border-radius: 5px;
+        padding: 10px;
+        justify-content: space-around;
+        align-items: center;
+
+        .airspace_content_item_info>* {
+            margin-bottom: 3px;
+
+        }
+
+        .airspace_content_item_title {
+            font-size: 20px;
+            color: rgb(224, 224, 224);
+        }
+
+        .airspace_content_item_id {
+            color: #686868;
+            font-size: 10px;
+
+
+        }
+
+        .airspace_content_item_poistion {
+            font-size: 15px;
+            color: #c95520;
+        }
+
+    }
+
+    .airspace_content_item:hover {
+        background-color: #067d986b;
+        background-image: linear-gradient(180deg, #067d986b 0%, #027b7775 100%);
+        cursor: pointer;
+    }
+
+    .airspace_content_list::-webkit-scrollbar {
+        // width: 3px;
+        height: 5px;
+        /* 滚动条的宽度 */
+    }
+
+    .airspace_content_list::-webkit-scrollbar-track {
+        background: transparent;
+        /* 滚动条轨道的背景色 */
+    }
+
+    .airspace_content_list::-webkit-scrollbar-thumb {
+        background-color: #8888889f;
+        /* 滚动条的颜色 */
+        border-radius: 5px;
+
+        /* 滚动条圆角 */
+        // border: 3px solid transparent;
+        /* 滚动条与轨道间的边距 */
+    }
+
+    .airspace_content_list::-webkit-scrollbar-thumb:hover {
+        background-color: #c2c2c2;
+        /* 当鼠标悬停时的滚动条颜色 */
+    }
+}
+
+@keyframes upFromBottom {
+    0% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+

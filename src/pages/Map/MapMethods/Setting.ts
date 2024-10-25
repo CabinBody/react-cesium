@@ -18,6 +18,8 @@ export const MAPBOX_USER = {
     token:MAPBOX_TOKEN
 }
 
-export const UAV_MODULE = '/public/UAV.glb'
+export const UAV_MODULE = '/public/CesiumDrone.glb'
+export const AIR_MODULE = '/public/Cesium_Air.glb'
+
 // const targetLongitude = 108.9109251
 // const targetLatitude = 30.3731565

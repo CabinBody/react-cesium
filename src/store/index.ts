@@ -1,13 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
-import CesiumMapReducer from "./modules/CesiumMapReducer";
 import userReducer from "./modules/userReducer";
-import currentDataReducer from './modules/currentEntityReducer'
+import pageSwitchReducer from "./modules/pageSwitchReducer";
+import leftClickTargetReducer from './modules/leftClickTargetReducer'
 
 const Store = configureStore({
     reducer: {
-        cesiumMap: CesiumMapReducer,
+        pageSwitch: pageSwitchReducer,
         token: userReducer,
-        currentData : currentDataReducer
+        onLeftClickTarget: leftClickTargetReducer
     }
 })
 

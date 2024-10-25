@@ -4,14 +4,15 @@ import { RootDispatch } from "./store"
 
 export type DataPoint = {
     name: string
-    value:number
-    cityList:any[]
+    value: number
+    cityList: any[]
 }
 // 每个数据点的坐标
 export type Point = {
     province: string
     city: string
     id: string
+    type: string
     name?: string
     longitude?: number
     latitude?: number
@@ -19,7 +20,8 @@ export type Point = {
     degree?: number
     pitch?: number
     roll?: number
-    uavCount?: number
+    velocity?:number
+    uavCount?: number 
 }
 // 浮窗的屏幕坐标
 export interface PopXY {
@@ -47,9 +49,9 @@ export interface Mouse {
 
 export interface ConfinedArea {
     id: string
-    timeSpan : string
-    confineMethod:string
-    subscription?:string
+    timeSpan: string
+    confineMethod: string
+    subscription?: string
 }
 
 // 全局变量声明
@@ -57,16 +59,22 @@ declare global {
 
     // 每个实体携带的数据
     interface EntityData {
-        origin?: Point | null
-        province?: string
-        city?: string
+        entityInfo?: Point | null
+        _province?: string
+        _city?: string
     }
 
-    type Layer ='TOP'|'MEDIUM'|'BOTTOM'|'REALITY'
+    type Layer = 'TOP' | 'MEDIUM' | 'BOTTOM' | 'REALITY'
 
     interface CurrentLocation {
-        layer:Layer
-        province:string
-        city:string
+        layer: Layer
+        province: string
+        city: string
+        cameraLongitude: number
+        cameraLatitude: number
+        cameraHeight: number
+        cameraHeading: number
+        cameraPitch: number
+        cameraRoll: number
     }
 }

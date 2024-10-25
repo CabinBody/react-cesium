@@ -1,7 +1,7 @@
 import * as Cesium from 'cesium'
 import 'cesium/Widgets/widgets.css'
 import { getDataPrimitive } from './methodsRepo'
-import { UAV_MODULE } from './Setting'
+import { UAV_MODULE } from './setting'
 
 const alarmType = ['Unauthorized', 'Faulty', 'Credible']
 

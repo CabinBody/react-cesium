@@ -1,9 +1,10 @@
 import * as Cesium from "cesium";
 import 'cesium/Widgets/widgets.css'
-import { DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT } from './Setting'
+import { DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT } from './setting'
 import loadResources from "./loadResources";
 import addProvince from "./addProvince";
 import backimg from '../../../asset/2/tycho2t3_80_mx.jpg'
+import { addWorldTerrainAsync } from "./methodsRepo";
 
 const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
 
@@ -96,6 +97,9 @@ const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
     viewer.clock.clockStep = Cesium.ClockStep.SYSTEM_CLOCK;
     viewer.clock.multiplier = 1;
     viewer.clock.shouldAnimate = false
+
+    // 加载地形
+    addWorldTerrainAsync(viewer)
 
     const data = loadResources()
 

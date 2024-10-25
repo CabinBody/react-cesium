@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Login from "../pages/Login";
 import Map from "../pages/Map";
-import Dashboard from "../pages/Map/components/Dashboard";
+
 const Router = createBrowserRouter([
     {
         index:true,
@@ -9,7 +9,7 @@ const Router = createBrowserRouter([
     },
     {
         path:'/Map',
-        element:<Map></Map>
+        element:<Map></Map>,
     },
     {   
         path:'/test',

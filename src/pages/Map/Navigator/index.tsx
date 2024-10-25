@@ -1,14 +1,24 @@
 import { useState } from 'react'
 import './index.less'
-import CurrentTime from '../CurrentTime'
+import CurrentTime from './CurrentTime'
+import { RootDispatch, RootState } from '../../../store'
+import { useDispatch, useSelector } from 'react-redux'
+import { setPage } from '../../../store/modules/pageSwitchReducer'
 
-const Navigator: React.FC = () => {
-    const [navStatus, setNavStatus] = useState('首页')
+interface NavigatorProps {
+    currentState: string
+}
 
-    const navItem = ['首页', '航线分析', '空域情况', '区域态势']
+
+const Navigator: React.FC<NavigatorProps> = ({ currentState }) => {
+    const { pageName } = useSelector((state: RootState) => state.pageSwitch)
+    // 申明dispatch
+    const dispatch: RootDispatch = useDispatch()
+
+    const navItem = ['首页', '航线分析', '空域管理', '区域态势']
 
     const clickChange = (item: string) => {
-        setNavStatus(item)
+        dispatch(setPage(item))
     }
 
 
@@ -23,16 +33,17 @@ const Navigator: React.FC = () => {
                     Low-Altitude UAV Smart Platform
                 </div>
             </div>
-            <div className='nav_switch'>
+            {currentState !== 'BOTTOM' && <div  className='nav_prompt'></div>}
+            {currentState === 'BOTTOM' && <div className='nav_switch'>
                 {navItem.map((item) => (
                     <div
                         key={item}
                         onClick={() => { clickChange(item) }}
-                        className={`nav_title ${item == navStatus ? 'active' : ''}`}>
-                        {`${item == navStatus? `[ ${item} ]`: item }`}
+                        className={`nav_title ${item == pageName ? 'active' : ''}`}>
+                        {`${item == pageName ? `[ ${item} ]` : item}`}
                     </div>
                 ))}
-            </div>
+            </div>}
             <div className='nav_more_info'>
                 <div className='whether_bar'>
                     <div className='whether_img'></div>

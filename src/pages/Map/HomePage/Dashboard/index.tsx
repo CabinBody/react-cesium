@@ -1,16 +1,18 @@
 import './index.less'
 import DashboardSvg from './DashboardSvg'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../../../store'
 
 
 const Dashboard: React.FC = () => {
-    const velocity = 150
+    const {entityInfo} = useSelector((state:RootState)=>state.onLeftClickTarget)
 
     return (
         <div className='dashboard_container'>
-            <DashboardSvg velocity={velocity}></DashboardSvg>
+            <DashboardSvg velocity={entityInfo!.velocity ?? 0}></DashboardSvg>
             <div className='dashboard_velocity'>
                 <div className='dashboard_show_velocity'>
-                    <div className='dashboard_velocity_num'>{velocity}</div>
+                    <div className='dashboard_velocity_num'>{entityInfo?.velocity}</div>
                     <div style={{ fontSize: '15px', color: 'rgba(255,255,255,0.3)' }}>KM</div>
                 </div>
                 <div className='dashboard_fly_velocity'>飞行速度</div>

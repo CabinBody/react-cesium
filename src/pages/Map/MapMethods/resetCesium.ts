@@ -4,7 +4,7 @@ import viewerInitial from './viewerInitial'
 
 
 
-const resetAll = (viewer: Cesium.Viewer, topContainerRef: any, mediumContainerRef: any,bottomContainerRef:any) => {
+const resetCesium = (viewer: Cesium.Viewer, topContainerRef: any, mediumContainerRef: any,bottomContainerRef:any) => {
     viewer.entities.removeAll()
     viewer.dataSources.removeAll()
     mediumContainerRef.current = []
@@ -16,4 +16,4 @@ const resetAll = (viewer: Cesium.Viewer, topContainerRef: any, mediumContainerRe
 
 }
 
-export default resetAll
+export default resetCesium

@@ -2,10 +2,11 @@ body,
 html {
   margin: 0;
   user-select: none;
+  font-family: 'Arial', sans-serif;
 }
 
-span{
-  font-size: 0.7vw;
+span {
+  // font-size: 0.7vw;
 }
 
 .submit_success {
@@ -30,44 +31,12 @@ span{
 
   }
 
-  .map_data_show {
+  .layout_container {
+    display: none;
+  }
+
+  .layout_container.show {
     display: flex;
-    position: absolute;
-    top: 10vh;
-    z-index: 1;
-
-    .right_container {
-      display: flex;
-      margin: 1vh 0 0 1vw;
-      position: fixed;
-      right: 1.5vw;
-      transform: translateX(120%);
-      flex-direction: column;
-      align-items: end;
-      transition: transform 1s ease-out, opacity 1s ease-out;
-    }
-
-    .right_container.show {
-      transform: translateX(0);
-    }
-
-    @keyframes leftContainerShow {
-      0% {
-        transform: translateX(-100%);
-        opacity: 0;
-      }
-
-      100% {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-
-    .left_container {
-      animation: leftContainerShow 1s ease-out;
-      margin-left: 1.5vw;
-    }
   }
 
   .pop {
@@ -133,24 +102,44 @@ span{
   justify-content: space-between;
 }
 
-.home_button_wrap {
-  width: 100%;
-  display: flex;
-  position: absolute;
+.cesium_button_container {
   z-index: 3;
-  justify-content: center;
-  top: 5%;
-  margin-top: -1.5vh;
-  column-gap: 1.5vw;
+
+
+
+  .airspace_button_wrap {
+    animation: leftContainerShow 1s ease-out;
+    display: flex;
+    position: fixed;
+    flex-direction: column;
+    left: 0;
+    top: 30%;
+    justify-content: space-between;
+    height: 30%;
+
+  }
+
+  .flight_button_wrap {
+    animation: rightContainerShow 1s ease-out;
+    display: flex;
+    position: fixed;
+    flex-direction: column;
+    right: 0;
+    top: 30%;
+    justify-content: space-between;
+    height: 30%;
+  }
+
+
 
   .drawmode_select {
+    animation: leftContainerShow 1s ease-out;
     height: 100%;
     width: 100%;
     padding: 10px;
-    border: 2px solid 242b09;
     /* 绿色边框 */
     border-radius: 5px;
-    background-color: #0c5a56;
+    background-image: linear-gradient(-90deg, #074553 0%, #027b77c6 100%);
     /* 浅绿色背景 */
     color: #ffffff;
     /* 绿色文本 */
@@ -171,13 +160,15 @@ span{
     /* 聚焦时的绿色边框 */
   }
 
-  .select_container {
-    width: 150px;
+  .drawer_select_container {
+    width: 200px;
     height: 50px;
-    margin: 0 auto;
+    // margin: 0 auto;
   }
 
-  .select_container::after {
+  .drawer_select_container::after {
+    animation: leftContainerShow 2s ease;
+
     content: '▼';
     /* 自定义下拉箭头 */
     font-size: 12px;
@@ -190,25 +181,26 @@ span{
   }
 
 
-  .home_button {
+  .cesium_button {
+    // animation: leftContainerShow 1s ease-out;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: white;
     font-size: 14px;
-    background-color: #0c5a56;
+    background-image: linear-gradient(90deg, #074553 0%, #027b7700 100%);
     z-index: 3;
-    width: 150px;
-    height: 50px;
-    border: 1px solid #242b09;
-    border-radius: 10px;
+    width: 200px;
+    height: 80px;
+    // border: 1px solid #242b09;
+    border-radius: 5px;
   }
 
 
-  .home_button:hover {
-    background-color: #0c313a;
+  .cesium_button:hover {
+    background-image: linear-gradient(90deg, #067d98 0%, #1ad2cc 100%);
   }
-}
-
-.home_button_wrap.close {
-  display: none;
 }
 
 .drawer_wrap {
