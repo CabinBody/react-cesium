@@ -2,16 +2,15 @@ import './index.less'
 import React, { useEffect, useRef, useState } from "react";
 import * as Cesium from 'cesium'
 import 'cesium/Widgets/widgets.css'
-import { DataPoint, Point, PopXY, ConfinedArea } from '../../global-env';
+import { DataPoint, PopXY, ConfinedArea } from '../../global-env';
 import viewerInitial from './MapMethods/viewerInitial';
 import loadResources from './MapMethods/loadResources';
-import { CESIUMTOKEN, DEFAULTCAMERAHEIGHT, DEFAULTCAMERALATITUDE, DEFAULTCAMERALONGITUDE, MAPBOX_USER, TIDITU_TOKEN } from './MapMethods/setting';
+import { CESIUMTOKEN, DEFAULTCAMERAHEIGHT, DEFAULTCAMERALATITUDE, DEFAULTCAMERALONGITUDE, MAPBOX_USER } from './MapMethods/setting';
 import switchProvinceView from './MapMethods/switchProvinceView';
 import resetCesium from './MapMethods/resetCesium';
 import switchCityView from './MapMethods/switchCityView';
 import { getDataPrimitive, findItemById } from "./MapMethods/methodsRepo"
 import PickedInfo from './components/PickedInfo';
-import confineImg from '../../asset/confine.png'
 import switchUavView from './MapMethods/switchUavView';
 import SubmitSuccess from './MapMethods/SubmitSuccess';
 import Navigator from './Navigator';
@@ -23,6 +22,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootDispatch, RootState } from '../../store'
 import { setPage } from '../../store/modules/pageSwitchReducer';
 import { setEntityCity, setEntityInfo, setEntityProvince } from '../../store/modules/leftClickTargetReducer';
+import RightClick from './components/RightClick';
+import { resetAllParams, setConfineMethod, setId, setIsConfigured, setSubscription, setTimeSpan, setType } from '../../store/modules/rightClickTargetReducer';
+import { removeAlertQueue, setFinishedAlerts } from '../../store/modules/alertQueueReducer';
 
 export const useLayerRef = () => {
   const topContainerRef = useRef<any[]>([])
@@ -38,12 +40,13 @@ export const useLayerRef = () => {
 
 const CesiumMap: React.FC = () => {
   const dispatch: RootDispatch = useDispatch()
-  const { entityInfo, _city, _province } = useSelector((state: RootState) => state.onLeftClickTarget)
+  const { entityInfo } = useSelector((state: RootState) => state.onLeftClickTarget)
+  const { finishedAlerts } = useSelector((state: RootState) => state.alertQueueStore)
+
   const [controlSignal, setControlSignal] = useState('')
-  const [onDraw, setOnDraw] = useState(true)
+  const [onDraw, setOnDraw] = useState(false)
   const [isShowButton, setIsShowButton] = useState(false)
   const [isShowComponent, setIsShowComponent] = useState(false)
-  const [selectedOption, setSelectedOption] = useState('');
   const [cameraHeight, setCameraHeight] = useState(0)
   const [height_ALL, setheight] = useState('')
   const [longitude_ALL, setLongitude] = useState(0)
@@ -53,10 +56,6 @@ const CesiumMap: React.FC = () => {
   const signalRef = useRef<any>(null)
 
   const { pageName } = useSelector((state: RootState) => state.pageSwitch)
-
-  const confinedAreaWrapRef = useRef<ConfinedArea[] | null>(null)
-  const targetAreaRef = useRef<ConfinedArea | null>(null)
-  const [isConfigured, setIsConfigured] = useState(false)
 
   const cesiumContainerRef = useRef<Cesium.Viewer | any>(null)
   const [viewer, setViewer] = useState<Cesium.Viewer | null>(null)
@@ -74,21 +73,14 @@ const CesiumMap: React.FC = () => {
   })
 
   const { topContainerRef, mediumContainerRef, bottomContainerRef } = useLayerRef()
-
-
-
   const cityRef = useRef<any>(true)
-
   const drawModeRef = useRef<any>(null)
   const drawWrapRef = useRef<any>(null)
   const [selectedValue, setSelectedValue] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
-
-  const [isPaused, setIsPaused] = useState(true)
-  const [speedMultiplier, setSpeedMultiplier] = useState(1)
   const [popup, setPopup] = useState<PopXY | null>(null);
   const [rPopup, setRpopup] = useState<PopXY | null>(null);
-  const [isClickArea, setIsClickArea] = useState(false)
+  const confinedAreaStore = useRef<ConfinedArea | any>([])
+  const { type } = useSelector((state: RootState) => state.onRightClickTarget)
 
   //左键点击生成信息框
   const handleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -103,12 +95,6 @@ const CesiumMap: React.FC = () => {
 
   // 地图主体
   useEffect(() => {
-    // 加载数据
-    const data = loadResources()
-
-    // 初始化cesium地图组件
-    const uavCountList: DataPoint[] = data.uavCountList
-
     Cesium.Ion.defaultAccessToken = CESIUMTOKEN
 
     // 影像层选取
@@ -139,23 +125,55 @@ const CesiumMap: React.FC = () => {
     });
 
     const viewer: Cesium.Viewer = viewerRef.current
-
     setViewer(viewer)
-
+    viewerInitial(viewer, topContainerRef)
+    initialMouseEvent(viewer)
     viewer.imageryLayers.add(imageryProviders[0])
+
+
+    return () => {
+      viewer.destroy()
+      setPickUavId('')
+      setIsShowButton(false)
+      setIsShowComponent(false)
+      bottomContainerRef.current = []
+      mediumContainerRef.current = []
+      topContainerRef.current = []
+      drawWrapRef.current = null
+      drawModeRef.current = null
+      signalRef.current = null
+      currentRef.current = {
+        layer: 'TOP',
+        province: '',
+        city: '',
+        cameraHeight: DEFAULTCAMERAHEIGHT,
+        cameraLongitude: DEFAULTCAMERALONGITUDE,
+        cameraLatitude: DEFAULTCAMERALATITUDE,
+        cameraHeading: 0,
+        cameraPitch: -90,
+        cameraRoll: 0,
+      }
+      setOnDraw(false)
+      resetLeftClick()
+      dispatch(setEntityProvince(''))
+      dispatch(setEntityCity(''))
+      setSelectedValue('')
+      setControlSignal('')
+      targetRef.current = null
+
+    }
+  }, [])
+
+  //初始化所有鼠标点击事件
+  const initialMouseEvent = (viewer: Cesium.Viewer) => {
+    // 加载数据
+    const data = loadResources()
+    // 初始化cesium地图组件
+    const uavCountList: DataPoint[] = data.uavCountList
     drawWrapRef.current = []
-
-
-
-
     let activeShapePoints = [] as any[]
     let activeShape: any = null
     let floatingPoint: any = null
-
-
-    viewerInitial(viewer, topContainerRef)
-
-
 
     // 添加左键点击事件
     let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
@@ -198,24 +216,7 @@ const CesiumMap: React.FC = () => {
       // Cesium地图内的实体左键点击事件
       if (Cesium.defined(pickObject)) {
         // demo演示添加的点击事件
-        console.log('点击了对象:', pickObject.id)
         if (pickObject.id) {
-          // if (pickObject.id.name == '昌平区') {
-          //   cityRef.current = true
-          //   bottomContainerRef.current.forEach(item => {
-          //     if (item.name == '延庆区_entity') {
-          //       item.polygon.material = Cesium.Color.GRAY.withAlpha(0.3)
-          //     }
-          //     if (item.name == '昌平区') {
-          //       item.polygon.material = Cesium.Color.fromCssColorString('#00868B').withAlpha(0.1)
-          //     }
-          //   })
-          //   setPickUavId('')
-          //   setSelectedOption('')
-          //   setIsClickArea(false)
-          //   setIsConfigured(false)
-          //   targetAreaRef.current = null
-          // }
           if (pickObject.id.name == 'tower') {
             // console.log('点击了对象:', pickObject.id.ellipse)
             if (pickObject.id.ellipse.show == true) {
@@ -231,7 +232,6 @@ const CesiumMap: React.FC = () => {
               })
             }
           }
-
           // 左键点击无人机实体事件
           else if (pickObject.id.name == 'UAV') {
             let dataPrimitive = getDataPrimitive(currentRef.current.province, currentRef.current.city)
@@ -334,26 +334,21 @@ const CesiumMap: React.FC = () => {
         else {
           resetLeftClick()
           setPickUavId('')
-          setSelectedOption('')
-          setIsClickArea(false)
-          setIsConfigured(false)
-          targetAreaRef.current = null
+          dispatch(resetAllParams())
         }
       }
       else {
         resetLeftClick()
         setPickUavId('')
-        setSelectedOption('')
-        setIsClickArea(false)
-        setIsConfigured(false)
-        targetAreaRef.current = null
+        dispatch(resetAllParams())
       }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
 
     // 添加右键事件
     handler.setInputAction((click: any) => {
+      dispatch(resetAllParams())
       let pickObject = viewer.scene.pick(click.position)
-      console.log('右键点击了对象:', pickObject.id.position)
+      // console.log('右键点击了对象:', pickObject.id)
       if (drawModeRef.current) {
         activeShapePoints.pop()
         if (activeShapePoints.length) {
@@ -370,39 +365,29 @@ const CesiumMap: React.FC = () => {
         activeShape = undefined
         activeShapePoints = []
       }
-      else if (Cesium.defined(pickObject) && pickObject.id.name == 'specificArea_Fixed') {
+      else if (Cesium.defined(pickObject) && pickObject.id.name == 'specificArea_Fixed' && !selectedValue) {
         // console.log('右键点击了对象:', pickObject.id.position)
-        setIsClickArea(true)
-        targetAreaRef.current = null
-        targetAreaRef.current = {
-          id: pickObject.id.id,
-          timeSpan: '',
-          confineMethod: ''
-        }
-        // console.log('右键点击了对象:', pickObject.id)
-
+        dispatch(setId(pickObject.id.id))
+        dispatch(setType('area'))
+        dispatch(setIsConfigured(false))
       }
-      else if (Cesium.defined(pickObject) && pickObject.id.name == 'specificArea_Configured') {
-        setIsClickArea(true)
-        setIsConfigured(true)
-        if (confinedAreaWrapRef.current) {
-          confinedAreaWrapRef.current.forEach(item => {
-            if (item.id == pickObject.id.id) {
-              targetAreaRef.current = null
-              targetAreaRef.current = item
-            }
-          })
+      else if (Cesium.defined(pickObject) && pickObject.id.name == 'specificArea_Configured' && !selectedValue) {
+        dispatch(setId(pickObject.id.id))
+        dispatch(setType('area'))
+        dispatch(setIsConfigured(true))
+        let target = confinedAreaStore.current.find((item: any) => item.id === pickObject.id.id)
+        if (target) {
+          dispatch(setTimeSpan(target.timeSpan))
+          dispatch(setSubscription(target.subscription))
+          dispatch(setConfineMethod(target.confineMethod))
         }
       }
       else {
-        setIsClickArea(false)
-        setIsConfigured(false)
-        targetAreaRef.current = null
+        dispatch(resetAllParams())
       }
 
 
     }, Cesium.ScreenSpaceEventType.RIGHT_CLICK)
-
 
     //添加移动鼠标事件
     const highlightColor = new Cesium.Color(1.0, 1.0, 1.0, 0.5)
@@ -440,11 +425,9 @@ const CesiumMap: React.FC = () => {
       }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-
     // 添加双击事件
     handler.setInputAction((doubleClick: any) => {
       let pickObject = viewer.scene.pick(doubleClick.position)
-
       // console.log(pickObject)
       if (Cesium.defined(pickObject)) {
         // 世界地图层
@@ -470,7 +453,7 @@ const CesiumMap: React.FC = () => {
                 setIsShowButton(true)
                 setIsShowComponent(true)
                 currentRef.current.layer = 'BOTTOM'
-                switchCityView(viewer, currentRef, bottomContainerRef, cityRef)
+                switchCityView(viewer, currentRef, bottomContainerRef, dispatch, finishedAlerts)
                 mediumContainerRef.current.forEach(item => {
                   item.show = false
                 })
@@ -520,7 +503,6 @@ const CesiumMap: React.FC = () => {
       setOnDraw(false)
       setIsShowButton(false)
       setIsShowComponent(false)
-      setSelectedOption('');
       setCameraHeight(0)
       setheight('')
       setLongitude(0)
@@ -531,9 +513,6 @@ const CesiumMap: React.FC = () => {
       signalRef.current = null
 
       dispatch(setPage('首页'))
-      confinedAreaWrapRef.current = null
-      targetAreaRef.current = null
-      setIsConfigured(false)
       cityRef.current = true
       currentRef.current = {
         layer: 'TOP',
@@ -551,14 +530,9 @@ const CesiumMap: React.FC = () => {
       drawModeRef.current = null
       drawWrapRef.current = null
       setSelectedValue('');
-      setSelectedDate('');
-      setIsPaused(true)
-      setSpeedMultiplier(1)
       setPopup(null);
       setRpopup(null);
-      setIsClickArea(false)
     }
-
 
     // 绘制点
     const drawPoint = (position: any) => {
@@ -642,46 +616,8 @@ const CesiumMap: React.FC = () => {
       drawWrapRef.current.push(shape)
       return shape
     }
+  }
 
-    return () => {
-      viewer.destroy()
-      setPickUavId('')
-      setIsShowButton(false)
-      setIsShowComponent(false)
-      setIsPaused(true)
-      setSpeedMultiplier(1)
-      bottomContainerRef.current = []
-      mediumContainerRef.current = []
-      topContainerRef.current = []
-      drawWrapRef.current = null
-      drawModeRef.current = null
-      signalRef.current = null
-      currentRef.current = {
-        layer: 'TOP',
-        province: '',
-        city: '',
-        cameraHeight: DEFAULTCAMERAHEIGHT,
-        cameraLongitude: DEFAULTCAMERALONGITUDE,
-        cameraLatitude: DEFAULTCAMERALATITUDE,
-        cameraHeading: 0,
-        cameraPitch: -90,
-        cameraRoll: 0,
-      }
-      setOnDraw(false)
-      resetLeftClick()
-      dispatch(setEntityProvince(''))
-      dispatch(setEntityCity(''))
-      setSelectedOption('')
-      setSelectedValue('')
-      setControlSignal('')
-      setSpeedMultiplier(1)
-      setIsClickArea(false)
-      setIsConfigured(false)
-      confinedAreaWrapRef.current = null
-      targetRef.current = null
-
-    }
-  }, [])
 
   //监听页面切换
   useEffect(() => {
@@ -722,11 +658,7 @@ const CesiumMap: React.FC = () => {
     }
   }, [pageName])
 
-  // useEffect(() => {
-  //   console.log(entityInfo, _city, _province)
-  // })
-
-
+  //重置左键点击
   const resetLeftClick = () => {
     dispatch(setEntityInfo({
       province: '',
@@ -748,6 +680,7 @@ const CesiumMap: React.FC = () => {
   const rebackMap = () => {
     setIsShowButton(false)
     setIsShowComponent(false)
+
     if (viewer) {
       viewer.entities.removeAll()
       viewer.dataSources.removeAll()
@@ -762,111 +695,6 @@ const CesiumMap: React.FC = () => {
     })
     // console.log(currentRef)
 
-  }
-  // 选择控制策略
-  const handleChange = (e: any) => {
-    setSelectedOption(e.target.value)
-  };
-  // 设置限制时间
-  const handleDateChange = (e: any) => {
-    setSelectedDate(e.target.value)
-  };
-  // 提交限制区域
-  const confineAareSubmit = (e: any) => {
-    e.preventDefault()
-    if (targetAreaRef.current != null) {
-      if (selectedDate && selectedOption) {
-        let tId = targetAreaRef.current.id
-        targetAreaRef.current = null
-        targetAreaRef.current = {
-          id: tId,
-          confineMethod: selectedOption,
-          timeSpan: selectedDate,
-          subscription: 'subsription'
-        }
-        if (viewer) {
-          let area = viewer.entities.getById(tId)
-          if (area) {
-            area.name = 'specificArea_Configured'
-            area.label = new Cesium.LabelGraphics({
-              text: 'Confined',
-              font: '40px Helvetica',
-              fillColor: Cesium.Color.WHITE,
-              outlineColor: Cesium.Color.BLACK,
-              outlineWidth: 20,
-              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            })
-          }
-        }
-        if (confinedAreaWrapRef.current) {
-          confinedAreaWrapRef.current.push(targetAreaRef.current)
-        }
-        else {
-          confinedAreaWrapRef.current = []
-          confinedAreaWrapRef.current.push(targetAreaRef.current)
-        }
-      }
-    }
-    targetAreaRef.current = null
-    setIsClickArea(false)
-    setIsConfigured(false)
-  }
-  // 取消限制区域
-  const cancelConfineAare = () => {
-    if (targetAreaRef.current != null) {
-      let tId = targetAreaRef.current.id
-      if (confinedAreaWrapRef.current && viewer) {
-        confinedAreaWrapRef.current.filter(item => item.id != tId)
-        viewer.entities.removeById(tId)
-      }
-      targetAreaRef.current = null
-      setIsClickArea(false)
-      setIsConfigured(false)
-    }
-
-  }
-  // 控制动画开始暂停
-  const handleStartPause = () => {
-    if (viewer) {
-      if (isPaused) {
-        viewer.clock.shouldAnimate = true;
-      } else {
-        viewer.clock.shouldAnimate = false;
-      }
-      setIsPaused(!isPaused);
-    }
-  };
-  // 复位动画
-  const handleReset = () => {
-    if (viewer) {
-      viewer.clock.currentTime = viewer.clock.startTime.clone();
-      viewer.clock.shouldAnimate = false;
-      // if (targetRef.current) {
-      //   targetRef.current.forEach((item: any) => {
-      //     viewer.entities.remove(item)
-      //   })
-      // }
-      setIsPaused(true);
-    }
-  };
-  // 控制速度
-  const plusSpeed = () => {
-    if (viewer) {
-      if (viewer.clock.multiplier < 100) {
-        viewer.clock.multiplier = viewer.clock.multiplier + 1
-        setSpeedMultiplier(viewer.clock.multiplier)
-      }
-    }
-  }
-  // 改变动画速度
-  const slowSpeed = () => {
-    if (viewer) {
-      if (viewer.clock.multiplier > -100) {
-
-        viewer.clock.multiplier = viewer.clock.multiplier - 1
-        setSpeedMultiplier(viewer.clock.multiplier)
-      }
-    }
   }
 
   // 切换影像
@@ -956,13 +784,27 @@ const CesiumMap: React.FC = () => {
   // 点击航线事件
   let cameraState: any = null
   let timeWrap: NodeJS.Timeout[] = []
-  const handleClickFlightList = () => {
+  const handleClickFlightList = (flight_number: string) => {
     timeWrap.forEach(item => {
       clearTimeout(item)
     })
     timeWrap = []
     if (viewer) {
-      const pathEntity = viewer.entities.getById(`prePath`)
+      const pathEntity = viewer.entities.getById(flight_number)
+      bottomContainerRef.current.forEach((item: any) => {
+        if (item.id != flight_number && item.name != 'tower' && item.name != '延庆区' && item.id != `UAV-${flight_number}`) {
+          item.show = false
+        }
+      })
+      let _timeOut = setTimeout(() => {
+        bottomContainerRef.current.forEach((item: any) => {
+          if (item.id != flight_number && item.name != 'tower' && item.name != '延庆区' && item.id != `UAV-${flight_number}`) {
+            item.show = true
+          }
+        })
+      }, 4000);
+      timeWrap.push(_timeOut)
+
       if (pathEntity) {
         if (!cameraState) {
           cameraState = saveCameraState(viewer)
@@ -992,7 +834,7 @@ const CesiumMap: React.FC = () => {
             pathEntity.polyline.width = new Cesium.CallbackProperty(() => {
               return currentWidth
             }, false)
-            const targetWidth = 50; // 目标宽度
+            const targetWidth = 100; // 目标宽度
             const duration = 1000; // 动画持续时间，单位毫秒
             let startTime = new Date().getTime();
             const animate = () => {
@@ -1021,7 +863,7 @@ const CesiumMap: React.FC = () => {
                   };
 
                   requestAnimationFrame(resetAnimation);
-                }, 2000); // 等待1秒后恢复
+                }, 2000); // 等待2秒后恢复
                 timeWrap.push(_outTime)
               }
             };
@@ -1034,10 +876,96 @@ const CesiumMap: React.FC = () => {
 
   }
 
+  //点击警告事件处理
+  const clickTohandleAlert = (id: string) => {
+    // console.log('clickTohandleAlert')
+    if (viewer) {
+      let target = viewer.entities.getById(id)
+      if (target) {
+        viewer.flyTo(target, {
+          duration: 0.5,
+          offset: new Cesium.HeadingPitchRange(0, -50, 30000)
+        })
+        // let position = target.position?.getValue(Cesium.JulianDate.now())
+        let position = target.position?.getValue(viewer.clock.currentTime)
 
+        if (position) {
+          let screenPosition = viewer.scene.cartesianToCanvasCoordinates(position)
+          let cartographic = Cesium.Cartographic.fromCartesian(position)
+          let longitude = Cesium.Math.toDegrees(cartographic.longitude)
+          let latitude = Cesium.Math.toDegrees(cartographic.latitude)
+          let height = cartographic.height
+          dispatch(setEntityInfo(
+            {
+              ...entityInfo, // 保留之前的状态
+              id: target.id,
+              height: height,
+              longitude: longitude,
+              latitude: latitude,
+              type: 'UAV',
+            }
+          ))
+          setPopup({ x: screenPosition.x, y: screenPosition.y })
+        }
+      }
+    }
+  }
 
+  //控制策略
+  const informMessage = (id: string, message: string) => {
+    if (viewer) {
+      let target = viewer.entities.getById(id)
+      if (target) {
+        target.label = new Cesium.LabelGraphics({
+          text: message,
+          font: '16px Helvetica',
+          outlineWidth: 2,
+          outlineColor: Cesium.Color.fromCssColorString('#871212').withAlpha(0.5),
+          fillColor: Cesium.Color.GREEN.withAlpha(1),
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          pixelOffset: new Cesium.Cartesian2(0, -30)
+        })
+        target.path = new Cesium.PathGraphics({
+          leadTime: 0,
+          trailTime: 3000,
+          width: 5,
+          material: new Cesium.PolylineDashMaterialProperty({
+            color: Cesium.Color.fromCssColorString('#871212'),
+            dashLength: 50,
+          })
+        })
 
-
+        if (message == '迫降') {
+          let nowPosition = target.position?.getValue(viewer.clock.currentTime)
+          let orientation = target.orientation?.getValue(viewer.clock.currentTime)
+          target.position = new Cesium.ConstantPositionProperty(nowPosition)
+          target.orientation = new Cesium.ConstantProperty(orientation)
+        }
+        if (message == '遣返') {
+          let nowPosition = target.position?.getValue(viewer.clock.currentTime)
+          if (nowPosition) {
+            let startPosition = Cesium.Cartesian3.fromDegrees(115.89628, 40.48825)
+            let positionList = [nowPosition, startPosition]
+            let startTime = viewer.clock.currentTime
+            let newVelocityProperty = new Cesium.SampledPositionProperty()
+            for (let i = 0; i < 2; i++) {
+              let time = Cesium.JulianDate.addSeconds(startTime, i * 10, new Cesium.JulianDate())
+              newVelocityProperty.addSample(time, positionList[i])
+            }
+            target.position = newVelocityProperty
+            target.orientation = new Cesium.VelocityOrientationProperty(newVelocityProperty)
+          }
+        }
+        dispatch(removeAlertQueue(id))
+        dispatch(setFinishedAlerts({
+          id: id,
+          title: message,
+          content: '飞行路线与预定路线不一致',
+          isFinished: true
+        }))
+      }
+    }
+  }
 
   return (
     <div>
@@ -1048,7 +976,7 @@ const CesiumMap: React.FC = () => {
         <div className='map_nav'>
           <Navigator currentState={currentRef.current.layer}></Navigator>
           <div className={`layout_container ${isShowComponent ? 'show' : ''}`}>
-            {pageName === '首页' && <HomePage></HomePage>}
+            {pageName === '首页' && <HomePage clickTohandleAlert={clickTohandleAlert}></HomePage>}
             {pageName === '航线分析' && <FlightRouteStatistics handleClickFlightList={handleClickFlightList}></FlightRouteStatistics>}
             {pageName === '空域管理' && <AirspaceManagement province={currentRef.current.province} city={currentRef.current.city}></AirspaceManagement>}
             {pageName === '区域态势' && <RegionalSituation switchLayer={switchLayer}></RegionalSituation>}
@@ -1061,76 +989,11 @@ const CesiumMap: React.FC = () => {
             top: popup!.y,
             left: popup!.x,
           }}>
-          <PickedInfo></PickedInfo>
+          <PickedInfo informMessage={informMessage}></PickedInfo>
         </div>}
         {/* 设置限制区域信息 */}
-        {rPopup && <div
-          className={`pop ${isClickArea ? '' : 'hide'}`}
-          style={{
-            top: rPopup!.y,
-            left: rPopup!.x,
-          }}
-        >
-          <div className='uavInfo_content'>
-            <div className='confine_title'>
-              <span> CityArea Restricted</span>
-              {isConfigured && <button className='uav_control_button' style={{ padding: '1px,3px,1px,3xp' }} onClick={cancelConfineAare}>Unfreeze</button>}
-            </div>
-            <span className='uavInfo_title' >
-              {targetAreaRef.current && <span>{targetAreaRef.current.timeSpan ? targetAreaRef.current.timeSpan : 'Not Configure'}</span>}
-              {!targetAreaRef.current && <span>Not Configure</span>}
-              <img src={confineImg} alt="" />
-            </span>
-            <span>Subscription:</span>
-            <span style={{ width: '400px' }}>
-              {targetAreaRef.current && <div>{targetAreaRef.current.subscription ? targetAreaRef.current.subscription : ''}</div>}
-            </span>
-          </div>
-          {!isConfigured && <div className='uavInfo_control'>
-            <span className='uavInfo_title' style={{ fontSize: '30px' }}>限制区控制策略</span>
-            <div>
-              <form onSubmit={confineAareSubmit} >
-                <div className='confine_wrap'>
-                  <div><span className='confine_title'>请输入限飞有效期</span></div>
-                  <div><input type="date" className='input_time' value={selectedDate} onChange={handleDateChange} /></div>
-                </div>
-                <div className='uav_control_form'>
-                  <div className='uav_control_input'>
-                    <label className={selectedOption === 'PersuasionBack' ? 'checked' : ''}>
-                      <input
-                        type="radio"
-                        name="option"
-                        value="PersuasionBack"
-                        checked={selectedOption === 'PersuasionBack'}
-                        onChange={handleChange}
-                      />
-                      <span className='radio-text'>劝返</span>
-                      <span>Persuasion-Back</span>
-                    </label>
-                  </div>
-                  <div className='uav_control_input'>
-                    <label className={selectedOption === 'Forced-Landing' ? 'checked' : ''}>
-                      <input
-                        type="radio"
-                        name="option"
-                        value="ForcedLanding"
-                        checked={selectedOption === 'ForcedLanding'}
-                        onChange={handleChange}
-                      />
-                      <span className='radio-text'>迫降</span>
-                      <span >Forced-Landing</span>
-                    </label>
-                  </div>
-                </div>
-                <div className='button_wrap'>
-                  <button className='uav_control_button' type="submit">Submit</button>
-                  <button className='uav_control_button' type="button" onClick={() => { setPickUavId(''); setSelectedOption(''); targetAreaRef.current = null; setIsClickArea(false) }}>Cancel</button>
-                </div>
-              </form>
-
-            </div>
-          </div>}
-        </div>}
+        {rPopup && type == 'area' && <RightClick pickedX={rPopup.x} pickedY={rPopup.y} viewer={viewer} confinedAreaStore={confinedAreaStore.current}
+        ></RightClick>}
         {/* 按钮集合 */}
         {isShowButton && <div className='cesium_button_container'>
           {pageName === '航线分析' && <div className='flight_button_wrap'>
@@ -1143,9 +1006,9 @@ const CesiumMap: React.FC = () => {
           <span style={{ color: 'white', fontSize: '30px' }}>{speedMultiplier}</span>
           <button className='home_button' onClick={slowSpeed}>减速/Slow</button> */}
           {pageName === '空域管理' && <div className='airspace_button_wrap'>
-            <div className='cesium_button' onClick={drawEnd}>{`${onDraw ? '点击开始/Draw' : '点击保存/Drawing'}`}</div>
+            <div className='cesium_button' onClick={drawEnd}>{`${!onDraw ? '点击开始/Draw' : '点击保存/Drawing'}`}</div>
             <div className='cesium_button' onClick={clearFunc}>清除/Clear</div>
-            <div className={`drawer_wrap ${onDraw ? '' : 'show'}`}>
+            <div className={`drawer_wrap ${onDraw ? 'show' : ''}`}>
               <div className='drawer_select_container'>
                 <select className="drawmode_select" id="dropdown" value={selectedValue} onChange={switchDrawMode}>
                   <option value="null">选择一个模式</option>

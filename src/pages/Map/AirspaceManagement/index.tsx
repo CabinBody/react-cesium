@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './index.less'
 
 interface AirspaceManagementProps {
@@ -10,9 +10,18 @@ const AirspaceManagement: React.FC<AirspaceManagementProps> = ({ province, city 
   // 模拟表格数据 (50条)
   const airspaceList = new Array(12).fill(0).map((_, index) => ({
     bannedType: index % 3 === 0 ? '遣返区域' : index % 3 === 1 ? '禁止区域' : '迫降区域',
-    aid: '923661',
+    aid: '9236'+ index,
     position: `40'N-116'E`,
   }));
+
+  const[searchValue, setSearchValue]=useState('')
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value)
+  }
+
+  const filterList = airspaceList.filter(airspace => airspace.aid.toLowerCase().includes(searchValue.toLowerCase()))
+
 
   return (
     <div className="airspace_container">
@@ -44,13 +53,13 @@ const AirspaceManagement: React.FC<AirspaceManagementProps> = ({ province, city 
         </div>
         <div className='airspace_search'>
           <img src="/src/asset/tabler_search.png" alt="" width='30' height='30' />
-          <input className='airspace_search_input' type="text" placeholder='请输入区域代号' />
+          <input className='airspace_search_input' type="text" placeholder='请输入区域代号' onChange={handleInputChange}/>
         </div>
 
 
       </div>
       <div className='airspace_content_list'>
-        {airspaceList.map((item, index) => (
+        {filterList.map((item, index) => (
           <div key={index} className='airspace_content_item'>
             <div className='airspace_content_item_info'>
               <div className='airspace_content_item_title'>{item.bannedType}</div>

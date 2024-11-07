@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import './index.less'
 import CurrentTime from './CurrentTime'
 import { RootDispatch, RootState } from '../../../store'

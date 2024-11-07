@@ -2,8 +2,10 @@ import * as Cesium from 'cesium'
 import 'cesium/Widgets/widgets.css'
 import addUavEntity from './addUavEntity'
 import addSigleUav from './addSigleUav'
+import { RootDispatch } from '../../../store'
+import { AlertQueueState } from '../../../store/modules/alertQueueReducer'
 
-const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObject<CurrentLocation>, bottomContainerRef: any, cityRef: any) => {
+const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObject<CurrentLocation>, bottomContainerRef: any,dispatch:RootDispatch,finishedAlerts:AlertQueueState[]) => {
 
     // viewer.scene.mode = Cesium.SceneMode.SCENE2D
     Cesium.GeoJsonDataSource.load(`../../../../public/Province/${currentRef.current.province}.json`, {
@@ -79,7 +81,7 @@ const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObjec
         viewer.scene.globe.show = true
 
         if (currentRef.current.city === '延庆区') {
-            addSigleUav(viewer, bottomContainerRef, cityRef)
+            addSigleUav(viewer, bottomContainerRef,dispatch,finishedAlerts)
         }
         else {
             addUavEntity(viewer, bottomContainerRef, currentRef.current.province, currentRef.current.city)

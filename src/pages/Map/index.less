@@ -5,10 +5,6 @@ html {
   font-family: 'Arial', sans-serif;
 }
 
-span {
-  // font-size: 0.7vw;
-}
-
 .submit_success {
   z-index: 9999;
   position: fixed;
@@ -42,6 +38,7 @@ span {
   .pop {
     position: absolute;
     z-index: 1;
+    display: flex;
 
   }
 
@@ -248,7 +245,7 @@ input[type="checkbox"] {
   /* 增大单选框 */
 }
 
-.radio-text {
+.radio_text {
   font-size: 20px;
   /* 增大文本 */
 }
@@ -260,7 +257,7 @@ input[type="radio"] {
   /* 把单选框的透明度设置为0，使它不可见，但仍然可以被选中 */
 }
 
-input[type="radio"]+.radio-text::before {
+input[type="radio"]+.radio_text::before {
   content: '';
   display: inline-block;
   width: 24px;
@@ -277,7 +274,7 @@ input[type="radio"]+.radio-text::before {
   vertical-align: middle;
 }
 
-input[type="radio"]:checked+.radio-text::before {
+input[type="radio"]:checked+.radio_text::before {
   background-color: #117466;
   /* 选中时的背景色 */
   border-color: #0c313a;
@@ -305,10 +302,3 @@ input[type="radio"]:checked+.radio-text::before {
   }
 }
 
-
-.button_wrap {
-  padding: 20px 40px 0 40px;
-  display: flex;
-  justify-content: center;
-  justify-content: space-between
-}

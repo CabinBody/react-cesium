@@ -20,7 +20,6 @@ const addUavEntity = (
     }
 
     if (dataPrimitive.cartesianPointList) {
-        let towerCount = 0
         for (let index = 0; index < dataPrimitive.cartesianPointList.length && index < 50; index++) {
             let position = dataPrimitive.cartesianPointList[index]
             if (dataPrimitive.hprList) {
@@ -93,7 +92,6 @@ const addUavEntity = (
 
 
                 // 添加无人机实体
-                let UAVRadius = 1000
                 let uav = viewer.entities.add({
                     id: dataPrimitive.origin[index].id,
                     name: 'UAV',
@@ -160,58 +158,58 @@ const addUavEntity = (
                 bottomContainerRef.current.push(uav)
 
 
-                // 添加信号塔  最大数量为10
-                if (towerCount < 10) {
-                    let tower = viewer.entities.add({
-                        name: 'tower',
-                        model: {
-                            uri: '../../../../public/tower.glb',
-                            minimumPixelSize: 200,
-                            scale: 1.0, // 调整模型大小
-                        },
-                        position: Cesium.Cartesian3.fromDegrees(lo + 0.04, la - 0.04, 100),
-                    })
-                    bottomContainerRef.current.push(tower)
-                }
+                // // 添加信号塔  最大数量为10
+                // if (towerCount < 10) {
+                //     let tower = viewer.entities.add({
+                //         name: 'tower',
+                //         model: {
+                //             uri: '../../../../public/tower.glb',
+                //             minimumPixelSize: 200,
+                //             scale: 1.0, // 调整模型大小
+                //         },
+                //         position: Cesium.Cartesian3.fromDegrees(lo + 0.04, la - 0.04, 100),
+                //     })
+                //     bottomContainerRef.current.push(tower)
+                // }
             }
         }
 
-        // 添加信号塔和无人机之间信号
-        let signalCount = 0
-        let towerPosition = [] as any[]
-        bottomContainerRef.current.forEach((item: any) => {
-            if (item.name == 'tower') {
-                towerPosition.push(item.position.getValue(viewer.clock.currentTime))
-            }
-        })
-        bottomContainerRef.current.forEach((item: any) => {
-            if (signalCount < 20) {
-                if (item.name == 'UAV') {
-                    towerPosition.forEach((towerPos: any) => {
-                        let signal = viewer.entities.add({
-                            name: 'signal',
-                            polyline: new Cesium.PolylineGraphics({
-                                positions: new Cesium.CallbackProperty(() => {
-                                    return [
-                                        towerPos,
-                                        item.position.getValue(viewer.clock.currentTime)
-                                    ]
-                                }, false),
-                                width: 2,
-                                material: new Cesium.PolylineDashMaterialProperty({
-                                    color: Cesium.Color.YELLOW.withAlpha(0.3),
-                                    dashLength: 20
-                                }),
+        // // 添加信号塔和无人机之间信号
+        // let signalCount = 0
+        // let towerPosition = [] as any[]
+        // bottomContainerRef.current.forEach((item: any) => {
+        //     if (item.name == 'tower') {
+        //         towerPosition.push(item.position.getValue(viewer.clock.currentTime))
+        //     }
+        // })
+        // bottomContainerRef.current.forEach((item: any) => {
+        //     if (signalCount < 20) {
+        //         if (item.name == 'UAV') {
+        //             towerPosition.forEach((towerPos: any) => {
+        //                 let signal = viewer.entities.add({
+        //                     name: 'signal',
+        //                     polyline: new Cesium.PolylineGraphics({
+        //                         positions: new Cesium.CallbackProperty(() => {
+        //                             return [
+        //                                 towerPos,
+        //                                 item.position.getValue(viewer.clock.currentTime)
+        //                             ]
+        //                         }, false),
+        //                         width: 2,
+        //                         material: new Cesium.PolylineDashMaterialProperty({
+        //                             color: Cesium.Color.YELLOW.withAlpha(0.3),
+        //                             dashLength: 20
+        //                         }),
                                 
-                            }),
-                        })
-                        bottomContainerRef.current.push(signal)
-                        signalCount += 1
-                    })
-                }
-            }
+        //                     }),
+        //                 })
+        //                 bottomContainerRef.current.push(signal)
+        //                 signalCount += 1
+        //             })
+        //         }
+        //     }
 
-        })
+        // })
 
     }
 }

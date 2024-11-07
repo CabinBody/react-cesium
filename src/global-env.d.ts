@@ -49,9 +49,11 @@ export interface Mouse {
 
 export interface ConfinedArea {
     id: string
+    type: string
     timeSpan: string
     confineMethod: string
     subscription?: string
+    isConfigured: boolean
 }
 
 // 全局变量声明

@@ -3,7 +3,6 @@ import 'cesium/Widgets/widgets.css'
 import { DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT } from './setting'
 import loadResources from "./loadResources";
 import addProvince from "./addProvince";
-import backimg from '../../../asset/2/tycho2t3_80_mx.jpg'
 import { addWorldTerrainAsync } from "./methodsRepo";
 
 const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
@@ -90,12 +89,6 @@ const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
 
 
     // 设置动画时长
-    viewer.clock.startTime = Cesium.JulianDate.fromDate(new Date());
-    viewer.clock.stopTime = Cesium.JulianDate.addSeconds(viewer.clock.startTime, 40, new Cesium.JulianDate());;
-    viewer.clock.currentTime = viewer.clock.startTime.clone();
-    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
-    viewer.clock.clockStep = Cesium.ClockStep.SYSTEM_CLOCK;
-    viewer.clock.multiplier = 1;
     viewer.clock.shouldAnimate = false
 
     // 加载地形

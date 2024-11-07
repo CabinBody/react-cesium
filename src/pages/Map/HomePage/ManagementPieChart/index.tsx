@@ -1,7 +1,5 @@
 import ReactECharts from 'echarts-for-react';
 import './index.less'
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store';
 
 
 const ManagementPieChart: React.FC = () => {

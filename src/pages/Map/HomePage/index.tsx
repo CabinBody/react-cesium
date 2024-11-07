@@ -4,8 +4,13 @@ import ManagementPieChart from './ManagementPieChart';
 import MissionFinishedChart from './MissionFinishedChart';
 import Dashboard from './Dashboard';
 import './index.less'
+import AlertQueue from './AlertQueue';
 
-const HomePage:React.FC = () => {
+interface HomePageProps {
+    clickTohandleAlert: (id:string) => void
+}
+
+const HomePage: React.FC<HomePageProps> = ({ clickTohandleAlert }) => {
     return (
         <div className='homepage_container'>
             <div className='map_data_show'>
@@ -20,6 +25,10 @@ const HomePage:React.FC = () => {
                     <ManagementPieChart></ManagementPieChart>
                     <Dashboard></Dashboard>
                 </div>
+                <div className='bottom_container'>
+                    <AlertQueue clickTohandleAlert={clickTohandleAlert}></AlertQueue>
+                </div>
+
             </div>
         </div>
     )

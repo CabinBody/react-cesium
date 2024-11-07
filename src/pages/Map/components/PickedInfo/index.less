@@ -1,8 +1,5 @@
-.container {
-   
-
-
-    .outside_frame {
+.pickedInfo_container {
+    .pickedInfo_outside_frame {
         border-radius: 10px;
         padding: 15px;
         color: rgb(255, 255, 255);
@@ -13,30 +10,28 @@
         background-image: linear-gradient(295deg, #252d3b 0%, #195d69 100%);
         box-shadow: 10px 8px 15px rgba(0, 0, 0, 0.2);
         opacity: 0.9;
-        
-
     }
 
-    .progress_bar {
+    .pickedInfo_progress_bar {
         font-size: 11px;
-        color:#e26441;
+        color: #e26441;
         display: flex;
         // justify-content: center;
         width: 200px;
         align-items: center;
         flex-direction: column;
         justify-content: space-evenly;
-
-        .progress{
+        .progress {
             width: 100px;
             height: 100px;
-            
+
         }
     }
 
-    .info_bar {
+    .pickedInfo_info_bar {
         display: flex;
         width: 100%;
+        margin-top: 10px;
         flex-direction: column;
 
         .flight_info {
@@ -70,11 +65,11 @@
 
                 .battery_svg {
                     padding-top: 5px;
-                    
+
                 }
 
                 .battery_text {
-                    color:#7c7c7c;
+                    color: #7c7c7c;
                     margin-top: -5px;
                     font-size: 8px;
                 }
@@ -92,32 +87,57 @@
             font-weight: bold;
         }
 
-        .more_info{
+        .more_info {
             font-size: 11px;
             display: flex;
             flex-direction: column;
 
-            .info_list{
+            .info_list {
                 display: flex;
                 justify-content: space-evenly;
                 margin-top: 8px;
 
-                .info_show{
+                .info_show {
                     display: flex;
                     width: 110px;
 
-                    span{
+                    span {
                         margin-left: 5px;
                     }
 
-                    .info_data{
-                        color:rgb(226, 100, 65);
+                    .info_data {
+                        color: rgb(226, 100, 65);
                     }
-                    
+
                 }
             }
         }
 
 
+    }
+    
+    .pickedInfo_control_bar{
+        color: white;
+        display: flex;
+        height: 40px;
+        border-radius: 10px;
+        border-top-right-radius:0px;
+        border-top-left-radius:0px;
+        background-color: #252d3b;
+        background-image: linear-gradient(295deg, #252d3b 0%, #195d69 100%);
+        box-shadow: 10px 8px 15px rgba(0, 0, 0, 0.5);
+        opacity: 0.9;
+        transform: translateY(-20%);
+        justify-content: space-evenly;
+        align-items: center;
+
+        .pickedInfo_control_btn{
+            display: flex;
+            width: 100px;
+            height: 25px;
+            justify-content: center;
+            align-items: center;
+
+        }
     }
 }

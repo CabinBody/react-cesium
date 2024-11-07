@@ -1,7 +1,6 @@
 import { Point } from "../../../global-env"
 import * as Cesium from 'cesium'
 import 'cesium/Widgets/widgets.css'
-import { addWorldTerrainAsync } from "./methodsRepo"
 
 
 const switchUavView = async (viewer: Cesium.Viewer, currentData: Point) => {

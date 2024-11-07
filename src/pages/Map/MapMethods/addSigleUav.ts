@@ -1,215 +1,283 @@
 import * as Cesium from 'cesium'
 import 'cesium/Widgets/widgets.css'
-import { UAV_MODULE, AIR_MODULE } from './setting'
+import { UAV_MODULE } from './setting'
+import { AlertQueueState, setAlertQueue } from '../../../store/modules/alertQueueReducer'
+import { RootDispatch } from '../../../store'
 
 const addSigleUav = (
     viewer: Cesium.Viewer,
     bottomContainerRef: any,
+    dispatch: RootDispatch,
+    finishedAlerts: AlertQueueState[],
 ) => {
-    // 连续点生成器
-    const generateCoordinates = (startLon: number, startLat: number, endLon: number, endLat: number, height: number, numPoints: number) => {
-        const coordinates = [];
-        const stepLon = (endLon - startLon) / (numPoints - 1);
-        const stepLat = (endLat - startLat) / (numPoints - 1);
 
-        for (let i = 0; i < numPoints; i++) {
-            let lon = startLon + stepLon * i;
-            let lat = startLat + stepLat * i;
-            coordinates.push(Cesium.Cartesian3.fromDegrees(lon, lat, height));
+    //将航线、无人机、地点实体列表存入bottomContainerRef
+    viewer.clock.shouldAnimate = true;
+    const flightDuration = 10
+
+    const uavLogin = (turthPosition: Cesium.Cartesian3[], prePosition: Cesium.Cartesian3[], uavId: string) => {
+        let startTime = viewer.clock.currentTime
+        //生成起点终点和预定路径
+        const startPoint = viewer.entities.add({
+            id: `startPoint-U${uavId}`,
+            name: 'startPoint',
+            position: prePosition[0],
+            point: {
+                pixelSize: 10,
+                color: Cesium.Color.WHITE,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 2,
+            }
+        })
+        bottomContainerRef.current.push(startPoint)
+        const endPoint = viewer.entities.add({
+            id: `endPoint-U${uavId}`,
+            name: 'endPoint',
+            position: prePosition[prePosition.length - 1],
+            point: {
+                pixelSize: 10,
+                color: Cesium.Color.WHITE,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 2,
+            }
+        })
+        bottomContainerRef.current.push(endPoint)
+
+        //生成预定路径
+        const prePath = viewer.entities.add({
+            id: `prePath-U${uavId}`,
+            name: 'prePath',
+            polyline: {
+                positions: [prePosition[0], prePosition[prePosition.length - 1]],
+                width: 5,
+                material: new Cesium.PolylineGlowMaterialProperty({
+                    color: Cesium.Color.WHITE.withAlpha(0.2),
+                    glowPower: 0.1,
+                }),
+            }
+        })
+        bottomContainerRef.current.push(prePath)
+
+
+        // 生成现实路径
+        generateCube(prePosition[0], prePosition[prePosition.length - 1], 500, prePosition)
+
+        // 初始化速度property
+        let preVelocityProperty = new Cesium.SampledPositionProperty();
+        let velocityProperty = new Cesium.SampledPositionProperty();
+
+        let target = finishedAlerts.find(item => item.id == uavId)
+        // console.log(target,finishedAlerts)
+        for (let i = 0; i < turthPosition.length; i++) {
+            let time = Cesium.JulianDate.addSeconds(startTime, i * flightDuration, new Cesium.JulianDate())
+            velocityProperty.addSample(time, turthPosition[i])
         }
+        for (let i = 0; i < prePosition.length - 1; i++) {
+            let time = Cesium.JulianDate.addSeconds(startTime, i * flightDuration, new Cesium.JulianDate())
+            preVelocityProperty.addSample(time, prePosition[i])
+        }
+        let velocityOrientation = new Cesium.VelocityOrientationProperty(velocityProperty)
+        //生成无人机实体
+        let isDispatchMessage = false
+        const uavEntity = viewer.entities.add({
+            id: uavId,
+            name: 'UAV',
+            position: velocityProperty,
+            model: {
+                uri: UAV_MODULE,
+                scale: scaleCallbackByProperty(800, velocityProperty),
+            },
+            orientation: velocityOrientation,
+            label: {
+                text: new Cesium.CallbackProperty(() => {
+                    let now = velocityProperty.getValue(viewer.clock.currentTime)
+                    let pre = preVelocityProperty.getValue(viewer.clock.currentTime)
+                    let isSamePath = true
+                    if (now != undefined || pre != undefined) {
+                        isSamePath = Cesium.Cartesian3.equals(now, pre)
+                    }
 
-        return coordinates;
+                    if (isSamePath) {
+                        return ''
+                    }
+                    else {
+                        if (!isDispatchMessage) {
+                            sendMessage(uavId)
+                            isDispatchMessage = true
+                        }
+                        return `${target ? target.title : '飞行异常'}`
+                    }
+                }, false),
+                font: '16px Helvetica',
+                outlineWidth: 2,
+                outlineColor: Cesium.Color.fromCssColorString('#871212').withAlpha(0.5),
+                fillColor: Cesium.Color.fromCssColorString('#871212').withAlpha(1),
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                pixelOffset: new Cesium.Cartesian2(0, -30)
+            },
+            path: {
+                resolution: 1,
+                width: 20,
+                material: new Cesium.PolylineGlowMaterialProperty({
+                    color: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.5),
+                    glowPower: 0.3,
+                    taperPower: 1,
+                }),
+                leadTime: 0, // Show the path ahead of the entity
+                trailTime: 3000 // Show the path behind the entity
+            }
+        })
+        bottomContainerRef.current.push(uavEntity)
     }
 
-    // 计算四元数
-    const generateOrientation = (uavPos: Cesium.Cartesian3, targetPos: Cesium.Cartesian3) => {
-        let direction = Cesium.Cartesian3.subtract(targetPos, uavPos, new Cesium.Cartesian3());
-        Cesium.Cartesian3.normalize(direction, direction);
-        // 计算航向、俯仰和滚转（单位为弧度）
-        let heading = Cesium.Math.toRadians(-40); // 计算航向
-        let pitch = 0
-        let roll = 0; // 假设不需要滚转，可以设为0
-
-        let hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll)
-        // 计算四元数（orientation）
-        let orientation = Cesium.Transforms.headingPitchRollQuaternion(uavPos, hpr);
-
-        return orientation
-
+    // 发送错误信息
+    const sendMessage = (id: string) => {
+        const message: AlertQueueState = {
+            id: id,
+            title: '飞行异常',
+            content: '飞行路线与预定路线不一致',
+            isFinished: false
+        }
+        dispatch(setAlertQueue(message))
     }
+    // // 连续点生成器
+    // const generateCoordinates = (startLon: number, startLat: number, endLon: number, endLat: number, height: number, numPoints: number) => {
+    //     const coordinates = [];
+    //     const stepLon = (endLon - startLon) / (numPoints - 1);
+    //     const stepLat = (endLat - startLat) / (numPoints - 1);
+
+    //     for (let i = 0; i < numPoints; i++) {
+    //         let lon = startLon + stepLon * i;
+    //         let lat = startLat + stepLat * i;
+    //         coordinates.push(Cesium.Cartesian3.fromDegrees(lon, lat, height));
+    //     }
+
+    //     return coordinates;
+    // }
 
     // 生成长方体
-    const generateCube = (start: Cesium.Cartesian3, end: Cesium.Cartesian3, radio: number) => {
-        let _center = Cesium.Cartesian3.add(start, end, new Cesium.Cartesian3())
-        _center = Cesium.Cartesian3.multiplyByScalar(_center, 0.5, new Cesium.Cartesian3())
-        let _direction = Cesium.Cartesian3.subtract(end, start, new Cesium.Cartesian3())
-        let _length = Cesium.Cartesian3.magnitude(_direction)
-        // Cesium.Cartesian3.normalize(_direction, _direction)
+    const generateCube = (start: Cesium.Cartesian3, end: Cesium.Cartesian3, radio: number, flightPath: Cesium.Cartesian3[]) => {
 
-        let heading = Cesium.Math.toRadians(-50); // 计算航向
-        let pitch = 0
-        let roll = 0; // 假设不需要滚转，可以设为0
+        // 计算方向向量
+        let direction = Cesium.Cartesian3.subtract(end, start, new Cesium.Cartesian3());
+        let length = Cesium.Cartesian3.magnitude(direction); // 获取长度
+        let center = Cesium.Cartesian3.add(start, end, new Cesium.Cartesian3());
+        center = Cesium.Cartesian3.multiplyByScalar(center, 0.5, new Cesium.Cartesian3()); // 中心点
 
-        let hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll)
-        // 计算四元数（orientation）
-        let orientation = Cesium.Transforms.headingPitchRollQuaternion(end, hpr);
+        // 用于计算速度方向的属性
+        let velocityProperty = new Cesium.SampledPositionProperty();
+        for (let i = 0; i < flightPath.length - 1; i++) {
+            let time = Cesium.JulianDate.addSeconds(viewer.clock.startTime, i * flightDuration, new Cesium.JulianDate())
+            velocityProperty.addSample(time, flightPath[i])
+        }
+        let velocityOrientation = new Cesium.VelocityOrientationProperty(velocityProperty)
+        let orientation = velocityOrientation.getValue(viewer.clock.currentTime)
 
         let cubePath = viewer.entities.add({
+            id: 'cubePath',
             name: 'cubePath',
-            position: _center,
+            position: center,
             orientation: orientation,
             box: {
-                dimensions: new Cesium.Cartesian3(_length, radio, radio),
+                dimensions: new Cesium.Cartesian3(length, radio, radio),
                 material: Cesium.Color.YELLOW.withAlpha(0.2),
-                // distanceDisplayCondition: new Cesium.DistanceDisplayCondition(10, 10000)
+                // distanceDisplayCondition: new Cesium.DistanceDisplayCondition(10, 50000)
+                show: new Cesium.CallbackProperty(() => {
+                    let currentHeight = viewer.camera.positionCartographic.height
+                    if (currentHeight < 10000) {
+                        return true
+                    }
+                    return false
+                }, false)
             }
         })
         bottomContainerRef.current.push(cubePath)
     }
 
-    const startCoordinate = [115.94272, 40.38082]
-    const endCoordinate = [116.35755, 40.74757]
-    const testStep = generateCoordinates(startCoordinate[0], startCoordinate[1], endCoordinate[0], endCoordinate[1], 2000, 100)
+    // 比例缩放回调函数
 
+
+    function scaleCallbackByPosition(scaleBasic: number, uavPos: Cesium.Cartesian3): Cesium.CallbackProperty {
+        return (new Cesium.CallbackProperty(() => {
+            // 获取相机的经度、纬度和高度
+            let cameraCartographic = viewer.camera.positionCartographic;
+            let cameraCartesian = Cesium.Cartesian3.fromRadians(
+                cameraCartographic.longitude,
+                cameraCartographic.latitude,
+                cameraCartographic.height
+            );
+
+            // 获取实体的位置
+            let entityPosition = Cesium.Cartographic.fromCartesian(uavPos);
+
+            // 计算实体的地心距离
+            let entityCartesianPosition = Cesium.Cartesian3.fromDegrees(entityPosition.longitude, entityPosition.latitude, entityPosition.height);
+            // 计算相机与实体之间的距离
+            let distance = Cesium.Cartesian3.distance(cameraCartesian, entityCartesianPosition);
+            // 根据距离调整模型缩放比例
+            if (distance < 10000) {
+                return scaleBasic // 距离小于1000米时，使用原始大小
+            } else if (distance >= 10000 && distance < 100000) {
+                return (1.0 - (distance - 1000) / 4000) * scaleBasic; // 距离在1000米到10000米时，逐渐缩小
+            } else {
+                return 0.2 * scaleBasic; // 最小比例，确保在更大距离下仍可以看到
+            }
+        }, false))
+    }
+
+    function scaleCallbackByProperty(scaleBasic: number, velocityProperty: Cesium.SampledPositionProperty): Cesium.CallbackProperty {
+        return (new Cesium.CallbackProperty(() => {
+            // 获取相机的经度、纬度和高度
+            let cameraCartographic = viewer.camera.positionCartographic;
+            let cameraCartesian = Cesium.Cartesian3.fromRadians(
+                cameraCartographic.longitude,
+                cameraCartographic.latitude,
+                cameraCartographic.height
+            );
+
+            // 获取实体的位置
+            let entityPosition: Cesium.Cartographic = new Cesium.Cartographic();
+
+            let cartesian3 = velocityProperty.getValue(viewer.clock.currentTime)
+            if (cartesian3) {
+                let position = Cesium.Cartographic.fromCartesian(cartesian3);
+                entityPosition = position
+            }
+
+            // 计算实体的地心距离
+            let entityCartesianPosition = Cesium.Cartesian3.fromDegrees(entityPosition.longitude, entityPosition.latitude, entityPosition.height);
+            // 计算相机与实体之间的距离
+            let distance = Cesium.Cartesian3.distance(cameraCartesian, entityCartesianPosition);
+            // 根据距离调整模型缩放比例
+            if (distance < 10000) {
+                return scaleBasic // 距离小于1000米时，使用原始大小
+            } else if (distance >= 10000 && distance < 100000) {
+                return (1.0 - (distance - 1000) / 4000) * scaleBasic; // 距离在1000米到10000米时，逐渐缩小
+            } else {
+                return 0.2 * scaleBasic; // 最小比例，确保在更大距离下仍可以看到
+            }
+        }, false))
+    }
     let towerPos = [
         Cesium.Cartesian3.fromDegrees(115.894979, 40.445044, 100),
         Cesium.Cartesian3.fromDegrees(116.127752, 40.520062, 100),
         Cesium.Cartesian3.fromDegrees(116.388209, 40.703046, 100),
 
     ]
-    let prePath = [
-        Cesium.Cartesian3.fromDegrees(115.94272, 40.38082, 2000),
-        Cesium.Cartesian3.fromDegrees(116.35755, 40.74757, 2000),
+
+    const wrongPath = [
+        Cesium.Cartesian3.fromDegrees(115.89628, 40.48825),
+        Cesium.Cartesian3.fromDegrees(116.15785, 40.53008),
+        Cesium.Cartesian3.fromDegrees(116.38632, 40.69127)
+    ]
+    const rightPath = [
+        Cesium.Cartesian3.fromDegrees(115.89628, 40.48825),
+        Cesium.Cartesian3.fromDegrees(116.15785, 40.53008),
+        Cesium.Cartesian3.fromDegrees(116.47147, 40.57863)
     ]
 
-    //自定义渐变材质
-    const gradientMaterial = new Cesium.PolylineGlowMaterialProperty({
-        color: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.5),
-        glowPower: 0.3,
-    })
-    // 预定轨迹
-    let predictPath = viewer.entities.add({
-        id: `prePath`,
-        name: 'prePath',
-        polyline: {
-            positions: prePath,
-            width: 10,
-            material: new Cesium.PolylineGlowMaterialProperty({
-                color: Cesium.Color.WHITE.withAlpha(0.2),
-                glowPower: 0.1,
-            }),
-            clampToGround: false
-        }
-    })
-    bottomContainerRef.current.push(predictPath)
 
-    let uavCount = 0
-
-
-    // 生成起点和终点
-    let startPoint = viewer.entities.add({
-        name: 'StartPoint',
-        position: testStep[0],
-        point: {
-            pixelSize: 10,
-            color: Cesium.Color.WHITE,
-            outlineColor: Cesium.Color.WHITE,
-            outlineWidth: 2,
-        }
-    })
-    bottomContainerRef.current.push(startPoint)
-
-    let endPoint = viewer.entities.add({
-        name: 'EndPoint',
-        position: testStep[testStep.length - 1],
-        point: {
-            pixelSize: 10,
-            color: Cesium.Color.WHITE,
-            outlineColor: Cesium.Color.WHITE,
-            outlineWidth: 2,
-        }
-    })
-    bottomContainerRef.current.push(endPoint)
-
-    // 比例缩放回调函数
-    const scaleCallback = (scaleBasic: number) => (new Cesium.CallbackProperty(() => {
-        // 获取相机的经度、纬度和高度
-        let cameraCartographic = viewer.camera.positionCartographic;
-        let cameraCartesian = Cesium.Cartesian3.fromRadians(
-            cameraCartographic.longitude,
-            cameraCartographic.latitude,
-            cameraCartographic.height
-        );
-
-        // 获取实体的位置
-        let entityPosition = Cesium.Cartographic.fromCartesian(testStep[uavCount]);
-        // 计算实体的地心距离
-        let entityCartesianPosition = Cesium.Cartesian3.fromDegrees(entityPosition.longitude, entityPosition.latitude, entityPosition.height);
-
-        // 计算相机与实体之间的距离
-        let distance = Cesium.Cartesian3.distance(cameraCartesian, entityCartesianPosition);
-
-        // 根据距离调整模型缩放比例
-        if (distance < 10000) {
-            return scaleBasic // 距离小于1000米时，使用原始大小
-        } else if (distance >= 10000 && distance < 100000) {
-            return (1.0 - (distance - 1000) / 4000) * scaleBasic; // 距离在1000米到10000米时，逐渐缩小
-        } else {
-            return 0.2 * scaleBasic; // 最小比例，确保在更大距离下仍可以看到
-        }
-    }, false))
-
-    // 模拟连续生成可信飞机位置
-    const interval = setInterval(() => {
-
-        // 结束模拟
-        if (uavCount >= testStep.length - 1) {
-            clearInterval(interval);
-            return;
-        }
-        // 清除上一个时间点无人机
-        viewer.entities.removeById(`${uavCount - 1}`)
-        // 生成无人机实体
-        let uavId = `${uavCount}`
-        let currentOrientation = generateOrientation(testStep[uavCount], testStep[Math.min(uavCount + 1, testStep.length - 1)])
-        let uavCredible = viewer.entities.add({
-            id: uavId,
-            name: 'UAV',
-            position: testStep[uavCount],
-            model: {
-                uri: new Cesium.CallbackProperty(() => {
-                    let currentHeight = viewer.camera.positionCartographic.height
-                    if (currentHeight < 100000) {
-                        return UAV_MODULE
-                    }
-                    return AIR_MODULE
-
-                }, false),
-                scale: scaleCallback(1000),
-            },
-            orientation: currentOrientation
-
-        });
-        bottomContainerRef.current.push(uavCredible)
-
-        // 生成无人机路径
-        let uavDot = viewer.entities.add({
-            id: `${uavId}Path`,
-            name: 'crediblePath',
-            polyline: {
-                positions: [testStep[Math.max(uavCount - 1, 0)], testStep[uavCount]],
-                width: 20,
-                material: gradientMaterial,
-                clampToGround: false
-            }
-        })
-        bottomContainerRef.current.push(uavDot)
-
-        uavCount++
-    }, 3000)
-
-    // 生成现实路径
-    generateCube(prePath[0], prePath[1], 500)
+    uavLogin(wrongPath, rightPath, 'U001')
 
     // 信号塔实体
     for (let i = 0; i < 3; i++) {
@@ -217,7 +285,7 @@ const addSigleUav = (
             name: 'tower',
             model: {
                 uri: '../../../../public/tower.glb',
-                scale: scaleCallback(2000)
+                scale: scaleCallbackByPosition(600, towerPos[i])
             },
             position: towerPos[i],
             ellipse: new Cesium.EllipseGraphics({
@@ -231,7 +299,7 @@ const addSigleUav = (
         bottomContainerRef.current.push(tower)
     }
 
-
+    //--------------------------------------------------------------
     // // 信号线
     // bottomContainerRef.current.forEach((item: any) => {
     //     if (item.name == 'UAV') {
