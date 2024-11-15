@@ -62,14 +62,16 @@ const ManagementPieChart: React.FC = () => {
         ]
     };
 
-    return <div>
-        <div className='management_container'>
-            <div className="dot_img"></div>
-            <span>无人机运行情况统计</span>
-            <div className="click_more">查看更多</div>
+    return (
+        <div>
+            <div className='management_container'>
+                <div className="dot_img"></div>
+                <span>无人机运行情况统计</span>
+                <div className="click_more">查看更多</div>
+            </div>
+            <ReactECharts option={option} style={{ height: '300px', width: '300px' }} />
         </div>
-        <ReactECharts option={option} style={{ height: '300px', width: '300px' }} />
-    </div>
+    )
 
 }
 

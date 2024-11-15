@@ -1,5 +1,4 @@
 import { Point, DataFrame } from "../../../global-env";
-import 'cesium/Widgets/widgets.css'
 import * as Cesium from "cesium";
 import random_points from '../../../../public/virtual_UAV_DataPoint.json'
 import provinceList from '../../../../public/china.json'

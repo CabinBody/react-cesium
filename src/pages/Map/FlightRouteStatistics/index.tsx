@@ -149,11 +149,11 @@ const FlightRouteStatistics: React.FC<FlightProps> = ({ handleClickFlightList })
         <div className="flight-table">
             <div className='flight_table_nav'>
                 <div className='flight_table_title'>
-                    <img src="/src/asset/listimg2.png" alt="" width='30' height='30' />
+                    <img src="/assets/listimg2.png" alt="" width='30' height='30' />
                     <h2 style={{ color: 'white', marginLeft: '20px' }}>航线列表</h2>
                 </div>
                 <div className='flight_table_search'>
-                    <img src="/src/asset/tabler_search.png" alt="" width='30' height='30' />
+                    <img src="/assets/tabler_search.png" alt="" width='30' height='30' />
                     <input className='flight_table_search_input' type="text" placeholder='请输入航线代号' onChange={handleSearchChange}/>
                 </div>
                 <div className='flight_table_sort'>
@@ -178,7 +178,7 @@ const FlightRouteStatistics: React.FC<FlightProps> = ({ handleClickFlightList })
                         {filterFlightData.map((flight, index) => (
                             <tr onClick={() => { handleClickFlightList(flight.flight_number) }} key={index} className={`status-${flight.flight_status}`} >
                                 <td>
-                                    <img src="/src/asset/listimg.png" alt="" width="20" height='20' />
+                                    <img src="/assets/listimg.png" alt="" width="20" height='20' />
                                 </td>
                                 <td>{flight.flight_number}</td>
                                 <td>{flight.flight_plan}</td>

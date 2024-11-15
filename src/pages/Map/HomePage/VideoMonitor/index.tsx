@@ -1,5 +1,5 @@
 import './index.less'
-import vedioDemo from '../../../../asset/WX20240925-155702@2x.png'
+import vedioDemo from '/assets/WX20240925-155702@2x.png'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../../../store'
 

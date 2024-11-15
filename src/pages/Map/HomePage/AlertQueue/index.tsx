@@ -54,7 +54,7 @@ const AlertQueue: React.FC<AlertQueueProps> = ({clickTohandleAlert}) => {
                         <div className='alert_queue_content_item' key={index} onClick={() => {clickTohandleAlert(item.id)}}>
                             <div className='alert_queue_content_item_title'>
                                 <div className='alert_queue_content_item_title_text'>{item.title}</div>
-                                <img src='/src/asset/banned.png' width={30} height={30} className='alert_queue_content_item_title_icon' />
+                                <img src='/assets/banned.png' width={30} height={30} className='alert_queue_content_item_title_icon' />
                             </div>
                             <button className='alert_queue_content_item_button'>点击查看</button>
                         </div>

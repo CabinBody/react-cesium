@@ -1,5 +1,4 @@
 import * as Cesium from 'cesium'
-import 'cesium/Widgets/widgets.css'
 import { UAV_MODULE } from './setting'
 import { AlertQueueState, setAlertQueue } from '../../../store/modules/alertQueueReducer'
 import { RootDispatch } from '../../../store'
@@ -277,7 +276,7 @@ const addSigleUav = (
     ]
 
 
-    uavLogin(wrongPath, rightPath, 'U001')
+    uavLogin(wrongPath, rightPath, 'U00001')
 
     // 信号塔实体
     for (let i = 0; i < 3; i++) {

@@ -1,11 +1,10 @@
 import * as Cesium from 'cesium'
-import 'cesium/Widgets/widgets.css'
 import addUavEntity from './addUavEntity'
 import addSigleUav from './addSigleUav'
 import { RootDispatch } from '../../../store'
 import { AlertQueueState } from '../../../store/modules/alertQueueReducer'
 
-const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObject<CurrentLocation>, bottomContainerRef: any,dispatch:RootDispatch,finishedAlerts:AlertQueueState[]) => {
+const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObject<CurrentLocation>, bottomContainerRef: any, dispatch: RootDispatch, finishedAlerts: AlertQueueState[]) => {
 
     // viewer.scene.mode = Cesium.SceneMode.SCENE2D
     Cesium.GeoJsonDataSource.load(`../../../../public/Province/${currentRef.current.province}.json`, {
@@ -20,25 +19,14 @@ const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObjec
         const targetCityDs = new Cesium.CustomDataSource(currentRef.current.city)
 
         for (let i = 0; i < entities.length; i++) {
-            const entity = entities[i];
+            let entity = entities[i];
             if (entity.properties && entity.properties.name && entity.properties.name.getValue() == currentRef.current.city) {
-                // 将目标市的实体添加到 cityDataSource
-                // entity.name = '延庆区_entity'
-
                 targetCityDs.entities.add(entity)
+                console.log(entity.polygon)
                 bottomContainerRef.current.push(entity)
             }
-            // if (entity.properties && entity.properties.name && entity.properties.name.getValue() == '昌平区') {
-            //     // entity.name = '昌平区'
-
-            //     // entity.show = false
-            //     targetCityDs.entities.add(entity)
-            //     // console.log(entity)
-            //     bottomContainerRef.current.push(entity)
-
-
-            // }
         }
+
         viewer.dataSources.add(targetCityDs)
         bottomContainerRef.current.push(targetCityDs)
         let currentCameraPosition = viewer.camera.position
@@ -63,7 +51,7 @@ const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObjec
             currentRef.current.cameraLongitude = cameraLongitude
             currentRef.current.cameraLatitude = cameraLatitude
             currentRef.current.cameraHeight = cameraHeight
-        }, 1500)
+        }, 1000)
 
 
         // viewer.scene.screenSpaceCameraController.enableZoom = false; // 禁用缩放
@@ -81,7 +69,7 @@ const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObjec
         viewer.scene.globe.show = true
 
         if (currentRef.current.city === '延庆区') {
-            addSigleUav(viewer, bottomContainerRef,dispatch,finishedAlerts)
+            addSigleUav(viewer, bottomContainerRef, dispatch, finishedAlerts)
         }
         else {
             addUavEntity(viewer, bottomContainerRef, currentRef.current.province, currentRef.current.city)

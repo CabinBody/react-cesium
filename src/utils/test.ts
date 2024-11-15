@@ -1,7 +1,6 @@
 // src/CesiumMap.tsx
 import React, { useEffect, useRef } from 'react';
 import Cesium from 'cesium';
-import 'cesium/Widgets/widgets.css';
 
 const CesiumMap: React.FC = () => {
   const cesiumContainer = useRef<HTMLDivElement>(null);

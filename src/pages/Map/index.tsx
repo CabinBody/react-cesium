@@ -1,7 +1,8 @@
 import './index.less'
 import React, { useEffect, useRef, useState } from "react";
 import * as Cesium from 'cesium'
-import 'cesium/Widgets/widgets.css'
+import { CesiumHeatmap, HeatmapPoint } from "cesium-heatmap-es6"
+// import '/node_modules/cesium/Build/Cesium/Widgets/widgets.css';
 import { DataPoint, PopXY, ConfinedArea } from '../../global-env';
 import viewerInitial from './MapMethods/viewerInitial';
 import loadResources from './MapMethods/loadResources';
@@ -82,16 +83,7 @@ const CesiumMap: React.FC = () => {
   const confinedAreaStore = useRef<ConfinedArea | any>([])
   const { type } = useSelector((state: RootState) => state.onRightClickTarget)
 
-  //左键点击生成信息框
-  const handleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    setPopup({ x: event.clientX, y: event.clientY });
-  }
-  //右键点击生成信息框
-  const rightHandleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    event.preventDefault()
-    setRpopup({ x: event.clientX, y: event.clientY });
-    // console.log(event.clientX, event.clientY)
-  }
+
 
   // 地图主体
   useEffect(() => {
@@ -684,6 +676,7 @@ const CesiumMap: React.FC = () => {
     if (viewer) {
       viewer.entities.removeAll()
       viewer.dataSources.removeAll()
+      viewer.scene.primitives.removeAll()
       viewerInitial(viewer, topContainerRef)
     }
     mediumContainerRef.current = []
@@ -790,22 +783,21 @@ const CesiumMap: React.FC = () => {
     })
     timeWrap = []
     if (viewer) {
-      const pathEntity = viewer.entities.getById(flight_number)
-      bottomContainerRef.current.forEach((item: any) => {
-        if (item.id != flight_number && item.name != 'tower' && item.name != '延庆区' && item.id != `UAV-${flight_number}`) {
-          item.show = false
-        }
-      })
-      let _timeOut = setTimeout(() => {
+      const pathEntity = viewer.entities.getById(`prePath-${flight_number}`)
+      if (pathEntity) {
         bottomContainerRef.current.forEach((item: any) => {
-          if (item.id != flight_number && item.name != 'tower' && item.name != '延庆区' && item.id != `UAV-${flight_number}`) {
-            item.show = true
+          if (item.id != flight_number && item.name != 'tower' && item.name != '延庆区' && item.id != `prePath-${flight_number}`) {
+            item.show = false
           }
         })
-      }, 4000);
-      timeWrap.push(_timeOut)
-
-      if (pathEntity) {
+        let _timeOut = setTimeout(() => {
+          bottomContainerRef.current.forEach((item: any) => {
+            if (item.id != flight_number && item.name != 'tower' && item.name != '延庆区' && item.id != `prePath-${flight_number}`) {
+              item.show = true
+            }
+          })
+        }, 4000);
+        timeWrap.push(_timeOut)
         if (!cameraState) {
           cameraState = saveCameraState(viewer)
         }
@@ -967,6 +959,130 @@ const CesiumMap: React.FC = () => {
     }
   }
 
+  //左键点击生成信息框
+  const handleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    setPopup({ x: event.clientX, y: event.clientY });
+  }
+  //右键点击生成信息框
+  const rightHandleClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    event.preventDefault()
+    setRpopup({ x: event.clientX, y: event.clientY });
+    // console.log(event.clientX, event.clientY)
+  }
+
+  //切换热力图
+  const [regionalMessage, setRegionalMessage] = useState('')
+  const [regionalLayer, setRegionalLayer] = useState<any>(null)
+  useEffect(() => {
+    if (regionalLayer) {
+      regionalLayer.remove()
+    }
+    if (viewer) {
+      if (regionalMessage === '运力分布') {
+        const heatmapPositions: HeatmapPoint[] = [
+          { "x": 116.20681, "y": 40.63225, "value": 100 },
+          { "x": 115.90543, "y": 40.44265, "value": 57 },
+          { "x": 116.02783, "y": 40.46321, "value": 23 },
+          { "x": 116.13172, "y": 40.48287, "value": 78 },
+          { "x": 115.94845, "y": 40.41509, "value": 39 },
+          { "x": 116.07994, "y": 40.48612, "value": 92 },
+          { "x": 115.99521, "y": 40.42678, "value": 31 },
+          { "x": 116.10038, "y": 40.49350, "value": 66 },
+          { "x": 115.92036, "y": 40.45510, "value": 49 },
+          { "x": 116.01054, "y": 40.48091, "value": 82 },
+          { "x": 115.88567, "y": 40.44534, "value": 77 },
+          { "x": 116.04567, "y": 40.49228, "value": 15 },
+          { "x": 115.92742, "y": 40.42745, "value": 62 },
+          { "x": 116.11234, "y": 40.45521, "value": 36 },
+          { "x": 115.86214, "y": 40.46995, "value": 91 },
+          { "x": 116.07925, "y": 40.41833, "value": 24 },
+          { "x": 115.99485, "y": 40.44644, "value": 70 },
+          { "x": 116.13672, "y": 40.47711, "value": 42 },
+          { "x": 115.87749, "y": 40.43278, "value": 88 },
+          { "x": 115.93789, "y": 40.40905, "value": 53 },
+          { "x": 116.04467, "y": 40.48267, "value": 69 },
+          { "x": 116.00883, "y": 40.41719, "value": 96 },
+          { "x": 116.12715, "y": 40.45567, "value": 19 },
+          { "x": 115.94356, "y": 40.47123, "value": 34 },
+          { "x": 115.92988, "y": 40.48045, "value": 73 },
+          { "x": 115.98110, "y": 40.42894, "value": 45 },
+          { "x": 116.13740, "y": 40.46815, "value": 67 },
+          { "x": 115.89247, "y": 40.44980, "value": 29 },
+          { "x": 116.05679, "y": 40.49010, "value": 50 },
+          { "x": 116.01086, "y": 40.45690, "value": 80 },
+          { "x": 115.93423, "y": 40.41528, "value": 93 },
+          { "x": 115.85334, "y": 40.49245, "value": 22 },
+          { "x": 116.03612, "y": 40.47277, "value": 64 },
+          { "x": 116.04992, "y": 40.43910, "value": 12 },
+          { "x": 115.90572, "y": 40.42098, "value": 86 },
+          { "x": 115.90543, "y": 40.44265, "value": 57 },
+          { "x": 116.02783, "y": 40.46321, "value": 23 },
+          { "x": 116.13172, "y": 40.48287, "value": 78 },
+          { "x": 115.94845, "y": 40.41509, "value": 39 },
+          { "x": 116.07994, "y": 40.48612, "value": 92 },
+          { "x": 115.99521, "y": 40.42678, "value": 31 },
+          { "x": 116.10038, "y": 40.49350, "value": 66 },
+          { "x": 115.92036, "y": 40.45510, "value": 49 },
+          { "x": 116.01054, "y": 40.48091, "value": 82 },
+          { "x": 115.88567, "y": 40.44534, "value": 77 },
+          { "x": 116.04567, "y": 40.49228, "value": 15 },
+          { "x": 115.92742, "y": 40.42745, "value": 62 },
+          { "x": 116.11234, "y": 40.45521, "value": 36 },
+          { "x": 115.86214, "y": 40.46995, "value": 91 },
+          { "x": 116.07925, "y": 40.41833, "value": 24 },
+          { "x": 115.99485, "y": 40.44644, "value": 70 },
+          { "x": 116.13672, "y": 40.47711, "value": 42 },
+          { "x": 115.87749, "y": 40.43278, "value": 88 },
+          { "x": 115.93789, "y": 40.40905, "value": 53 },
+          { "x": 116.04467, "y": 40.48267, "value": 69 },
+          { "x": 116.00883, "y": 40.41719, "value": 96 },
+          { "x": 116.12715, "y": 40.45567, "value": 19 },
+          { "x": 115.94356, "y": 40.47123, "value": 34 },
+          { "x": 115.92988, "y": 40.48045, "value": 73 },
+          { "x": 115.98110, "y": 40.42894, "value": 45 },
+          { "x": 116.13740, "y": 40.46815, "value": 67 },
+          { "x": 115.89247, "y": 40.44980, "value": 29 },
+          { "x": 116.05679, "y": 40.49010, "value": 50 },
+          { "x": 116.01086, "y": 40.45690, "value": 80 },
+          { "x": 115.93423, "y": 40.41528, "value": 93 },
+          { "x": 115.85334, "y": 40.49245, "value": 22 },
+          { "x": 116.03612, "y": 40.47277, "value": 64 },
+          { "x": 116.04992, "y": 40.43910, "value": 12 },
+          { "x": 115.90572, "y": 40.42098, "value": 86 },
+          { "x": 115.92000, "y": 40.49500, "value": 40 },
+          { "x": 116.08000, "y": 40.40000, "value": 65 },
+          { "x": 116.05000, "y": 40.45000, "value": 99 },
+          { "x": 115.87000, "y": 40.49000, "value": 35 },
+          { "x": 116.03000, "y": 40.47000, "value": 55 },
+          { "x": 115.97000, "y": 40.43500, "value": 20 },
+          { "x": 116.10000, "y": 40.40500, "value": 78 },
+          { "x": 115.94000, "y": 40.48500, "value": 44 },
+          { "x": 116.12000, "y": 40.41500, "value": 60 },
+          { "x": 115.85000, "y": 40.45500, "value": 90 },
+        ]
+        setRegionalLayer(new CesiumHeatmap(viewer,
+          {
+            noLisenerCamera: true,
+            points: heatmapPositions,
+            heatmapDataOptions: { max: 100, min: 0 },
+            heatmapOptions: {
+              maxOpacity: 1,
+              minOpacity: 0,
+              radius: 50,
+            },
+          }
+        ))
+      }
+      if (regionalMessage === '空域分布') {
+        
+      }
+    }
+  }, [regionalMessage])
+
+  const clickRegionalButton = (message: string) => {
+    setRegionalMessage(message)
+  }
+
   return (
     <div>
       {/* 提交成功提示框 */}
@@ -979,7 +1095,7 @@ const CesiumMap: React.FC = () => {
             {pageName === '首页' && <HomePage clickTohandleAlert={clickTohandleAlert}></HomePage>}
             {pageName === '航线分析' && <FlightRouteStatistics handleClickFlightList={handleClickFlightList}></FlightRouteStatistics>}
             {pageName === '空域管理' && <AirspaceManagement province={currentRef.current.province} city={currentRef.current.city}></AirspaceManagement>}
-            {pageName === '区域态势' && <RegionalSituation switchLayer={switchLayer}></RegionalSituation>}
+            {pageName === '区域态势' && <RegionalSituation switchLayer={switchLayer} clickRegionalButton={clickRegionalButton}></RegionalSituation>}
           </div>
         </div>
         {/* 详细信息框 */}
@@ -1000,11 +1116,6 @@ const CesiumMap: React.FC = () => {
             <div className='cesium_button' onClick={() => { rebackMap() }}>返回/BACK</div>
             <div className='cesium_button' onClick={switchLayer}>切换影像/Switch</div>
           </div>}
-          {/* <button className='home_button' onClick={handleStartPause}>{isPaused ? '开始/Start' : '暂停/Pause'}</button>
-          <button className='home_button' onClick={handleReset}>重置动画/Reset</button>
-          <button className='home_button' onClick={plusSpeed}>加速/Boost</button>
-          <span style={{ color: 'white', fontSize: '30px' }}>{speedMultiplier}</span>
-          <button className='home_button' onClick={slowSpeed}>减速/Slow</button> */}
           {pageName === '空域管理' && <div className='airspace_button_wrap'>
             <div className='cesium_button' onClick={drawEnd}>{`${!onDraw ? '点击开始/Draw' : '点击保存/Drawing'}`}</div>
             <div className='cesium_button' onClick={clearFunc}>清除/Clear</div>

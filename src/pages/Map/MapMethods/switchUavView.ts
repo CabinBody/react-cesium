@@ -1,6 +1,5 @@
 import { Point } from "../../../global-env"
 import * as Cesium from 'cesium'
-import 'cesium/Widgets/widgets.css'
 
 
 const switchUavView = async (viewer: Cesium.Viewer, currentData: Point) => {

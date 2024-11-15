@@ -1,5 +1,4 @@
 import * as Cesium from "cesium";
-import 'cesium/Widgets/widgets.css'
 import { DEFAULTCAMERALONGITUDE, DEFAULTCAMERALATITUDE, DEFAULTCAMERAHEIGHT } from './setting'
 import loadResources from "./loadResources";
 import addProvince from "./addProvince";
@@ -53,7 +52,7 @@ const viewerInitial = (viewer: Cesium.Viewer, topContainerRef: any) => {
 
     // 添加第三方图层
     const mainMap = new Cesium.GeoJsonDataSource('mainMap')
-    mainMap.load("../../../../public/china.json", {
+    mainMap.load("/china.json", {
         fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.3),
         stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
         strokeWidth: 2,

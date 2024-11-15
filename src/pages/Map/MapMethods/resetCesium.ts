@@ -1,5 +1,4 @@
 import * as Cesium from 'cesium'
-import 'cesium/Widgets/widgets.css'
 import viewerInitial from './viewerInitial'
 
 

@@ -15,6 +15,8 @@
     "@types/proj4": "^2.5.5",
     "antd": "^5.19.3",
     "axios": "^1.7.2",
+    "cesium": "^1.123.1",
+    "cesium-heatmap-es6": "^0.8.0",
     "echarts": "^5.5.1",
     "echarts-for-react": "^3.0.2",
     "json-server": "^1.0.0-beta.1",

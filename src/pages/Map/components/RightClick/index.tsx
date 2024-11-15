@@ -88,7 +88,7 @@ const RightClick: React.FC<RightClickProps> = ({
                 <div className='confine_area_content'>
                     <span className='confine_area_title' >
                         <span>{timeSpan ? timeSpan : '未设置状态'}</span>
-                        <img src={'/src/asset/confine.png'} alt="" width={'140px'} height={'140px'} />
+                        <img src={'/assets/confine.png'} alt="" width={'140px'} height={'140px'} />
                     </span>
                     <span>Subscription:这是一个可设置限制的区域</span>
                     <span style={{ width: '400px' }}>{subscription ? subscription : ''}</span>
