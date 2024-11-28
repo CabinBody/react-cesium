@@ -12,9 +12,7 @@ const addSigleUav = (
 
     //将航线、无人机、地点实体列表存入bottomContainerRef
     viewer.clock.shouldAnimate = true;
-    const flightDuration = 10
-
-    const uavLogin = (turthPosition: Cesium.Cartesian3[], prePosition: Cesium.Cartesian3[], uavId: string) => {
+    const uavLogin = (turthPosition: Cesium.Cartesian3[], prePosition: Cesium.Cartesian3[], uavId: string, flightDuration: number) => {
         let startTime = viewer.clock.currentTime
         //生成起点终点和预定路径
         const startPoint = viewer.entities.add({
@@ -44,7 +42,7 @@ const addSigleUav = (
 
         //生成预定路径
         const prePath = viewer.entities.add({
-            id: `prePath-U${uavId}`,
+            id: `prePath-${uavId}`,
             name: 'prePath',
             polyline: {
                 positions: [prePosition[0], prePosition[prePosition.length - 1]],
@@ -59,7 +57,7 @@ const addSigleUav = (
 
 
         // 生成现实路径
-        generateCube(prePosition[0], prePosition[prePosition.length - 1], 500, prePosition)
+        generateCube(prePosition[0], prePosition[prePosition.length - 1], 500, prePosition, flightDuration, uavId)
 
         // 初始化速度property
         let preVelocityProperty = new Cesium.SampledPositionProperty();
@@ -71,7 +69,7 @@ const addSigleUav = (
             let time = Cesium.JulianDate.addSeconds(startTime, i * flightDuration, new Cesium.JulianDate())
             velocityProperty.addSample(time, turthPosition[i])
         }
-        for (let i = 0; i < prePosition.length - 1; i++) {
+        for (let i = 0; i < prePosition.length; i++) {
             let time = Cesium.JulianDate.addSeconds(startTime, i * flightDuration, new Cesium.JulianDate())
             preVelocityProperty.addSample(time, prePosition[i])
         }
@@ -155,7 +153,7 @@ const addSigleUav = (
     // }
 
     // 生成长方体
-    const generateCube = (start: Cesium.Cartesian3, end: Cesium.Cartesian3, radio: number, flightPath: Cesium.Cartesian3[]) => {
+    const generateCube = (start: Cesium.Cartesian3, end: Cesium.Cartesian3, radio: number, flightPath: Cesium.Cartesian3[], flightDuration: number, uavId: string) => {
 
         // 计算方向向量
         let direction = Cesium.Cartesian3.subtract(end, start, new Cesium.Cartesian3());
@@ -165,7 +163,7 @@ const addSigleUav = (
 
         // 用于计算速度方向的属性
         let velocityProperty = new Cesium.SampledPositionProperty();
-        for (let i = 0; i < flightPath.length - 1; i++) {
+        for (let i = 0; i < flightPath.length; i++) {
             let time = Cesium.JulianDate.addSeconds(viewer.clock.startTime, i * flightDuration, new Cesium.JulianDate())
             velocityProperty.addSample(time, flightPath[i])
         }
@@ -173,7 +171,7 @@ const addSigleUav = (
         let orientation = velocityOrientation.getValue(viewer.clock.currentTime)
 
         let cubePath = viewer.entities.add({
-            id: 'cubePath',
+            id: `cubePath${uavId}`,
             name: 'cubePath',
             position: center,
             orientation: orientation,
@@ -194,8 +192,6 @@ const addSigleUav = (
     }
 
     // 比例缩放回调函数
-
-
     function scaleCallbackByPosition(scaleBasic: number, uavPos: Cesium.Cartesian3): Cesium.CallbackProperty {
         return (new Cesium.CallbackProperty(() => {
             // 获取相机的经度、纬度和高度
@@ -269,14 +265,21 @@ const addSigleUav = (
         Cesium.Cartesian3.fromDegrees(116.15785, 40.53008),
         Cesium.Cartesian3.fromDegrees(116.38632, 40.69127)
     ]
-    const rightPath = [
+    const rightPathTestOne = [
         Cesium.Cartesian3.fromDegrees(115.89628, 40.48825),
         Cesium.Cartesian3.fromDegrees(116.15785, 40.53008),
         Cesium.Cartesian3.fromDegrees(116.47147, 40.57863)
     ]
+    const rightPathTestTwo = [
+        Cesium.Cartesian3.fromDegrees(115.98801, 40.38527),
+        Cesium.Cartesian3.fromDegrees(116.20956, 40.64724),
+    ]
 
 
-    uavLogin(wrongPath, rightPath, 'U00001')
+
+    uavLogin(wrongPath, rightPathTestOne, 'U00001', 10)
+    uavLogin(rightPathTestTwo, rightPathTestTwo, 'U00002', 50)
+
 
     // 信号塔实体
     for (let i = 0; i < 3; i++) {

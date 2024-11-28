@@ -4,7 +4,7 @@ import provincelist from '../../../../public/china.json'
 
 const switchProvinceView = (viewer: Cesium.Viewer, province: string, mediumContainerRef: any) => {
 
-    fetch(`../../../../public/Province/${province}.json`).then(response => {
+    fetch(`/Province/${province}.json`).then(response => {
         if (!response.ok) {
             throw new Error('failed Loading')
         }
@@ -59,7 +59,7 @@ const switchProvinceView = (viewer: Cesium.Viewer, province: string, mediumConta
 
         // 生成城市实体
         const proviceSlice = new Cesium.GeoJsonDataSource(province)
-        proviceSlice.load(`../../../../public/Province/${province}.json`, {
+        proviceSlice.load(`/Province/${province}.json`, {
             fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.3),
             stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
             strokeWidth: 2,

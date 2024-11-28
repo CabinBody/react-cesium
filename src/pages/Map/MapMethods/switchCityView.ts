@@ -7,7 +7,7 @@ import { AlertQueueState } from '../../../store/modules/alertQueueReducer'
 const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObject<CurrentLocation>, bottomContainerRef: any, dispatch: RootDispatch, finishedAlerts: AlertQueueState[]) => {
 
     // viewer.scene.mode = Cesium.SceneMode.SCENE2D
-    Cesium.GeoJsonDataSource.load(`../../../../public/Province/${currentRef.current.province}.json`, {
+    Cesium.GeoJsonDataSource.load(`/Province/${currentRef.current.province}.json`, {
         fill: Cesium.Color.fromCssColorString('#00868B').withAlpha(0.1),
         stroke: Cesium.Color.fromCssColorString('#FFDEAD'),
         strokeWidth: 10,
