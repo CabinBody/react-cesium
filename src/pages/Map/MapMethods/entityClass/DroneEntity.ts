@@ -1,4 +1,4 @@
-import Cesium from "cesium";
+import * as Cesium from 'cesium'
 import { UAV_MODULE } from '../setting.ts'
 import { message } from "antd";
 
@@ -70,7 +70,10 @@ export class DroneEntity {
         this.cartesianPosition = Cesium.Cartesian3.fromDegrees(this.position[0], this.position[1], this.height)
     }
 
-    // 无人机初始化
+
+
+
+    // 无人机初始化, 调用cesium的实体创建方法, 显示到地图上
     create() {
         this.entityRef = this.viewer.entities.add({
             id: `UAV${this.id}`,
@@ -80,6 +83,16 @@ export class DroneEntity {
             model: {
                 uri: this.model,
                 scale: this._scaleCallbackByPosition(600, this.cartesianPosition)
+            },
+            label: {
+                text: `UAV${this.id}`,
+                font: '16px Helvetica',
+                scale: this._scaleCallbackByPosition(3, this.cartesianPosition),
+                outlineWidth: 2,
+                outlineColor: Cesium.Color.fromCssColorString('#871212').withAlpha(0.5),
+                fillColor: Cesium.Color.WHITE,
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                pixelOffset: new Cesium.Cartesian2(0, -20)
             },
             path: {
                 resolution: 1,
@@ -92,11 +105,15 @@ export class DroneEntity {
                 leadTime: 0, // Show the path ahead of the entity
                 trailTime: 3000 // Show the path behind the entity
             }
-
-
         })
+        message.success('无人机已创建')
     }
 
+    // 设置目的地
+    setDestinations(pathPoints: number[]) {
+        if (!this.entityRef) return
+
+    }
 
     // 设置无人机的其他信息
     setInfo(info: DroneInfo) {
@@ -110,7 +127,7 @@ export class DroneEntity {
         message.success('无人机已销毁')
     }
 
-    _scaleCallbackByPosition(scaleBasic: number, uavPos: Cesium.Cartesian3): Cesium.CallbackProperty {
+    private _scaleCallbackByPosition(scaleBasic: number, uavPos: Cesium.Cartesian3): Cesium.CallbackProperty {
         return (new Cesium.CallbackProperty(() => {
             // 获取相机的经度、纬度和高度
             let cameraCartographic = this.viewer.camera.positionCartographic;
@@ -137,6 +154,4 @@ export class DroneEntity {
             }
         }, false))
     }
-
-
 }

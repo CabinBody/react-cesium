@@ -28,9 +28,9 @@ import { resetAllParams, setConfineMethod, setId, setIsConfigured, setSubscripti
 import { removeAlertQueue, setFinishedAlerts } from '../../store/modules/alertQueueReducer';
 
 export const useLayerRef = () => {
-  const topContainerRef = useRef<any[]>([])
-  const mediumContainerRef = useRef<any[]>([])
-  const bottomContainerRef = useRef<any[]>([])
+  const topContainerRef = useRef < any[] > ([])
+  const mediumContainerRef = useRef < any[] > ([])
+  const bottomContainerRef = useRef < any[] > ([])
 
   return {
     topContainerRef,
@@ -42,8 +42,6 @@ export const useLayerRef = () => {
 const CesiumMap: React.FC = () => {
   const dispatch: RootDispatch = useDispatch()
   const { entityInfo } = useSelector((state: RootState) => state.onLeftClickTarget)
-  const { finishedAlerts } = useSelector((state: RootState) => state.alertQueueStore)
-
   const [controlSignal, setControlSignal] = useState('')
   const [onDraw, setOnDraw] = useState(false)
   const [isShowButton, setIsShowButton] = useState(false)
@@ -53,15 +51,15 @@ const CesiumMap: React.FC = () => {
   const [longitude_ALL, setLongitude] = useState(0)
   const [latitude_ALL, setLatitude] = useState(0)
   const [pickUavId, setPickUavId] = useState('')
-  const targetRef = useRef<any>([])
-  const signalRef = useRef<any>(null)
+  const targetRef = useRef < any > ([])
+  const signalRef = useRef < any > (null)
 
   const { pageName } = useSelector((state: RootState) => state.pageSwitch)
 
-  const cesiumContainerRef = useRef<Cesium.Viewer | any>(null)
-  const [viewer, setViewer] = useState<Cesium.Viewer | null>(null)
-  const viewerRef = useRef<Cesium.Viewer | any>(null)
-  const currentRef = useRef<CurrentLocation>({
+  const cesiumContainerRef = useRef < Cesium.Viewer | any > (null)
+  const [viewer, setViewer] = useState < Cesium.Viewer | null > (null)
+  const viewerRef = useRef < Cesium.Viewer | any > (null)
+  const currentRef = useRef < CurrentLocation > ({
     layer: 'TOP',
     province: '',
     city: '',
@@ -74,13 +72,13 @@ const CesiumMap: React.FC = () => {
   })
 
   const { topContainerRef, mediumContainerRef, bottomContainerRef } = useLayerRef()
-  const cityRef = useRef<any>(true)
-  const drawModeRef = useRef<any>(null)
-  const drawWrapRef = useRef<any>(null)
+  const cityRef = useRef < any > (true)
+  const drawModeRef = useRef < any > (null)
+  const drawWrapRef = useRef < any > (null)
   const [selectedValue, setSelectedValue] = useState('');
-  const [popup, setPopup] = useState<PopXY | null>(null);
-  const [rPopup, setRpopup] = useState<PopXY | null>(null);
-  const confinedAreaStore = useRef<ConfinedArea | any>([])
+  const [popup, setPopup] = useState < PopXY | null > (null);
+  const [rPopup, setRpopup] = useState < PopXY | null > (null);
+  const confinedAreaStore = useRef < ConfinedArea | any > ([])
   const { type } = useSelector((state: RootState) => state.onRightClickTarget)
 
 
@@ -445,7 +443,7 @@ const CesiumMap: React.FC = () => {
                 setIsShowButton(true)
                 setIsShowComponent(true)
                 currentRef.current.layer = 'BOTTOM'
-                switchCityView(viewer, currentRef, bottomContainerRef, dispatch, finishedAlerts)
+                switchCityView(viewer, currentRef, bottomContainerRef)
                 mediumContainerRef.current.forEach(item => {
                   item.show = false
                 })
@@ -465,15 +463,12 @@ const CesiumMap: React.FC = () => {
               viewer.imageryLayers.get(1).show = false
 
               switchUavView(viewer, foundItem)
-              // console.log(viewer.imageryLayers.get(1)
               bottomContainerRef.current.forEach(item => {
                 if (item.name != 'UAV' && item.name != 'crediblePat' && item.name != 'tower' && item.name != 'signal') {
                   item.show = false
                 }
               })
               setPickUavId('')
-              // console.log(bottomContainerRef.current)
-
             }
           }
 
@@ -972,7 +967,7 @@ const CesiumMap: React.FC = () => {
 
   //切换热力图
   const [regionalMessage, setRegionalMessage] = useState('')
-  const [regionalLayer, setRegionalLayer] = useState<any>(null)
+  const [regionalLayer, setRegionalLayer] = useState < any > (null)
   useEffect(() => {
     if (regionalLayer) {
       regionalLayer.remove()
@@ -1074,7 +1069,7 @@ const CesiumMap: React.FC = () => {
         ))
       }
       if (regionalMessage === '空域分布') {
-        
+
       }
     }
   }, [regionalMessage])

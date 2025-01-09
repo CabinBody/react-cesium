@@ -1,10 +1,9 @@
 import * as Cesium from 'cesium'
-import addUavEntity from './addUavEntity'
-import addSigleUav from './addSigleUav'
 import { RootDispatch } from '../../../store'
 import { AlertQueueState } from '../../../store/modules/alertQueueReducer'
+import { DroneEntity } from './entityClass/DroneEntity'
 
-const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObject<CurrentLocation>, bottomContainerRef: any, dispatch: RootDispatch, finishedAlerts: AlertQueueState[]) => {
+const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObject<CurrentLocation>, bottomContainerRef: any) => {
 
     // viewer.scene.mode = Cesium.SceneMode.SCENE2D
     Cesium.GeoJsonDataSource.load(`/Province/${currentRef.current.province}.json`, {
@@ -22,7 +21,6 @@ const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObjec
             let entity = entities[i];
             if (entity.properties && entity.properties.name && entity.properties.name.getValue() == currentRef.current.city) {
                 targetCityDs.entities.add(entity)
-                console.log(entity.polygon)
                 bottomContainerRef.current.push(entity)
             }
         }
@@ -68,14 +66,25 @@ const switchCityView = (viewer: Cesium.Viewer, currentRef: React.MutableRefObjec
 
         viewer.scene.globe.show = true
 
-        if (currentRef.current.city === '延庆区') {
-            addSigleUav(viewer, bottomContainerRef, dispatch, finishedAlerts)
-        }
-        else {
-            addUavEntity(viewer, bottomContainerRef, currentRef.current.province, currentRef.current.city)
-        }
 
 
+        // if (currentRef.current.city === '延庆区') {
+        //     addSigleUav(viewer, bottomContainerRef, dispatch, finishedAlerts)
+        // }
+        // else {
+        //     addUavEntity(viewer, bottomContainerRef, currentRef.current.province, currentRef.current.city)
+        // }
+
+        const testEntity = new DroneEntity(viewer, {
+            id: 1,
+            position: [115.89628, 40.48825],
+            height: 2000,
+            orientation: [0, 0, 0],
+            speed: 0,
+        })
+
+        testEntity.create()
+        bottomContainerRef.current.push(testEntity.entityRef)
     })
 
 
